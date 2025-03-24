@@ -87,7 +87,10 @@ async def on_message(
                 smartgen_mgr.send_command("TEXT", truncated_text)
 
                 rt_plus_payload = build_rt_plus_tag_command(
-                    truncated_text, rt_plus_artist, rt_plus_title, duration_seconds
+                    truncated_text,
+                    rt_plus_artist,
+                    rt_plus_title,
+                    duration_seconds // 60,  # convert to minutes
                 )
                 if not rt_plus_payload:
                     logger.critical("Failed to build RT+TAG payload")

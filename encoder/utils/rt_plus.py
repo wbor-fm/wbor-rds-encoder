@@ -17,12 +17,18 @@ logger = configure_logging(__name__)
 
 
 def build_rt_plus_tag_command(
-    full_text: str, artist: str, title: str, duration: int
+    full_text: str, artist: str, title: str, timeout_mins: int = 0
 ) -> str:
     """
     Build the RT+TAG payload string for the 'artist - title' text.
 
     Returns a string to pass as the `RT+TAG=` value on the SmartGen.
+
+    Note: if the timeout duration is 0, the resulting timeout will be 0
+    (no timeout), meaning the text will remain on the display
+    indefinitely. After the timeout (in minutes) has elapsed, the text
+    RT+ packet will cease transmission, even though the RT `TEXT` string
+    remains.
     """
     logger.debug("Building `RT+TAG` payload")
 
@@ -33,15 +39,12 @@ def build_rt_plus_tag_command(
     if not title:
         logger.warning("No title provided")
         title = "NO TITLE"
+    if not timeout_mins:
+        logger.warning("No timeout provided, defaulting to 0")
 
     # Set to one since we will never send a command to indicate that the
     # item is not running.
     running_bit = 1
-
-    # Provided a duration in seconds, calculate the number of minutes
-    # If the duration is 0, the resulting timeout will be 0 (no timeout),
-    # meaning the text will remain on the display indefinitely.
-    timeout = duration // 60  # Convert seconds to minutes
 
     payload_parts = []
 
@@ -96,7 +99,7 @@ def build_rt_plus_tag_command(
 
     # Now that we've handled for potential final value exceeding 31, we can
     # join the parts together with the running bit and timeout
-    rt_plus_payload = ",".join(payload_parts + [str(running_bit), str(timeout)])
+    rt_plus_payload = ",".join(payload_parts + [str(running_bit), str(timeout_mins)])
 
     logger.debug("Final `RT+TAG` payload: `%s`", rt_plus_payload)
     return rt_plus_payload
