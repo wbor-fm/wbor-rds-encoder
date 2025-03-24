@@ -14,7 +14,7 @@ from config import DISCORD_WEBHOOK_URL
 from discord_webhook import AsyncDiscordWebhook
 
 
-async def send_webhook(message):
+async def send_webhook(message: str) -> None:
     """
     Send a message to Discord using a webhook.
     """
