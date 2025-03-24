@@ -4,13 +4,20 @@ Logging module.
 
 import logging
 from datetime import datetime, timezone
-from colorlog import ColoredFormatter
+
 import pytz
+from colorlog import ColoredFormatter
 
 
-def configure_logging(logger_name="wbor_rds_encoder"):
+def configure_logging(logger_name: str = "wbor_rds_encoder") -> logging.Logger:
     """
     Set up logging with colorized output and timestamps in Eastern Time.
+
+    Parameters:
+    - logger_name (str): The name of the logger to configure.
+
+    Returns:
+    - logging.Logger: The configured logger instance.
     """
     logger = logging.getLogger(logger_name)
     if logger.hasHandlers():
@@ -25,7 +32,7 @@ def configure_logging(logger_name="wbor_rds_encoder"):
     class EasternTimeFormatter(ColoredFormatter):
         """Custom log formatter to display timestamps in Eastern Time with colorized output"""
 
-        def formatTime(self, record, datefmt=None):
+        def formatTime(self, record, datefmt=None) -> str:
             # Convert UTC to Eastern Time
             eastern = pytz.timezone("America/New_York")
             utc_dt = datetime.fromtimestamp(record.created, tz=timezone.utc)
