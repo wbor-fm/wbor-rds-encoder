@@ -78,5 +78,5 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
     logger.debug(
         "Sent `%s` embed to Discord - Response: `%s`",
         embed_type,
-        response,
+        response.status_code,
     )
