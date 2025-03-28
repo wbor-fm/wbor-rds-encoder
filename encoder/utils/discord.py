@@ -12,7 +12,7 @@ Changelog:
 TODO: parse response and test for success/failure.
 """
 
-from config import DISCORD_WEBHOOK_URL
+from config import DISCORD_AUTHOR_ICON_URL, DISCORD_WEBHOOK_URL
 from discord_webhook import AsyncDiscordWebhook, DiscordEmbed
 from utils.logging import configure_logging
 
@@ -52,21 +52,26 @@ async def send_basic_webhook(message: str) -> None:
     )
 
 
-async def send_embed(
+async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     embed_type: EmbedType,
     title: str,
+    title_url: str,
     desc: str,
     fields: dict,
     color: Colors = Colors.DEFAULT,
+    author_icon_url: str = DISCORD_AUTHOR_ICON_URL,
+    author: str = "wbor-rds-encoder",
 ) -> None:
     """
     Send a message with an embed to Discord using a webhook.
     """
     webhook = AsyncDiscordWebhook(url=DISCORD_WEBHOOK_URL)
-    embed = DiscordEmbed(title=title, color=color, description=desc)
+    embed = DiscordEmbed(title=title, color=color, description=desc, url=title_url)
     for field in fields.items():
         field_name, field_value = field
         embed.add_embed_field(name=field_name, value=field_value)
+
+    embed.set_author(name=author, icon_url=author_icon_url)
     embed.set_timestamp()
     webhook.add_embed(embed)
     response = await webhook.execute()

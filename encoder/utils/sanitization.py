@@ -48,19 +48,24 @@ async def sanitize_text(raw_text: str) -> str:
     if non_ascii_chars:
         unidecoded_text = unidecode(raw_text, errors="replace").strip()
 
-        embed_type = EmbedType.UNIDECODE
         title = ""
         if len(non_ascii_chars) > 1:
             title = "Non-ASCII Character(s) Replaced"
         else:
             title = "Non-ASCII Character Replaced"
-        description = f"Non-ASCII Characters: `{''.join(set(non_ascii_chars))}`"
-        color = Colors.WARNING
         fields = {
             "Original": raw_text,
             "Unidecoded": unidecoded_text,
         }
-        await send_discord_embed(embed_type, title, description, fields, color)
+
+        await send_discord_embed(
+            embed_type=EmbedType.UNIDECODE,
+            title=title,
+            title_url="https://github.com/WBOR-91-1-FM/wbor-rds-encoder/blob/c860debbe5994af0fe391fdbbc8539a7741549a3/encoder/utils/sanitization.py#L24",  # pylint: disable=line-too-long
+            desc=f"Non-ASCII Characters: `{''.join(set(non_ascii_chars))}`",
+            fields=fields,
+            color=Colors.WARNING,
+        )
 
     # (2) At this point, the raw_text string may have been unidecoded.
     #   It should be safe within the ASCII range. We move on to

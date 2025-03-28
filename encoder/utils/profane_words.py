@@ -56,16 +56,18 @@ async def filter_profane_words(text: str) -> str:
 
         if censored:
             censored_text = re.sub(pattern, lambda m: "*" * len(m.group(0)), text)
-
-            embed_type = EmbedType.PROFANITY
-            title = "Profanity Filtered"
-            description = f"Profane word detected: `{word}`"
-            color = Colors.WARNING
             fields = {
                 "Original": text,
                 "Censored": censored_text,
             }
-            await send_discord_embed(embed_type, title, description, fields, color)
+            await send_discord_embed(
+                embed_type=EmbedType.PROFANITY,
+                title="Profanity Filtered",
+                title_url="https://github.com/WBOR-91-1-FM/wbor-rds-encoder/blob/c860debbe5994af0fe391fdbbc8539a7741549a3/encoder/utils/profane_words.py#L29",  # pylint: disable=line-too-long
+                desc=f"Profane word detected: `{word}`",
+                fields=fields,
+                color=Colors.WARNING,
+            )
             logger.debug("Censored text: `%s`", censored_text)
 
             return censored_text

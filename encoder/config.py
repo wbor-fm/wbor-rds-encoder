@@ -3,11 +3,15 @@ App configuration file. Load environment variables from .env file.
 """
 
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+DISCORD_AUTHOR_ICON_URL = os.getenv(
+    "DISCORD_AUTHOR_ICON_URL", "https://wbor.org/assets/images/apple-touch-icon.png"
+)
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
