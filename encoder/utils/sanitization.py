@@ -13,7 +13,8 @@ Changelog:
 import re
 
 from unidecode import unidecode
-from utils.discord import send_webhook as notify_discord
+from utils.discord import Colors, EmbedType
+from utils.discord import send_embed as send_discord_embed
 from utils.logging import configure_logging
 from utils.profane_words import filter_profane_words
 
@@ -47,13 +48,19 @@ async def sanitize_text(raw_text: str) -> str:
     if non_ascii_chars:
         unidecoded_text = unidecode(raw_text, errors="replace").strip()
 
-        log_message = (
-            f"Non-ASCII characters found: `{''.join(set(non_ascii_chars))}`\n"
-            f"Original: `{raw_text}`\n"
-            f"Unidecoded: `{unidecoded_text}`"
-        )
-        logger.warning(log_message)
-        await notify_discord(log_message)
+        embed_type = EmbedType.UNIDECODE
+        title = ""
+        if len(non_ascii_chars) > 1:
+            title = "Non-ASCII Character(s) Replaced"
+        else:
+            title = "Non-ASCII Character Replaced"
+        description = f"Non-ASCII Characters: `{''.join(set(non_ascii_chars))}`"
+        color = Colors.WARNING
+        fields = {
+            "Original": raw_text,
+            "Unidecoded": unidecoded_text,
+        }
+        await send_discord_embed(embed_type, title, description, fields, color)
 
     # (2) At this point, the raw_text string may have been unidecoded.
     #   It should be safe within the ASCII range. We move on to

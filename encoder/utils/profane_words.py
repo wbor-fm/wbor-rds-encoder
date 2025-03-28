@@ -19,7 +19,8 @@ Changelog:
 import json
 import re
 
-from utils.discord import send_webhook as notify_discord
+from utils.discord import Colors, EmbedType
+from utils.discord import send_embed as send_discord_embed
 from utils.logging import configure_logging
 
 logger = configure_logging(__name__)
@@ -56,12 +57,16 @@ async def filter_profane_words(text: str) -> str:
         if censored:
             censored_text = re.sub(pattern, lambda m: "*" * len(m.group(0)), text)
 
-            log_message = (
-                f"Profane word detected: `{word}`\n"
-                f"Original: `{text}`\n"
-                f"Censored: `{censored_text}`"
-            )
-            await notify_discord(log_message)
+            embed_type = EmbedType.PROFANITY
+            title = "Profanity Filtered"
+            description = f"Profane word detected: `{word}`"
+            color = Colors.WARNING
+            fields = {
+                "Original": text,
+                "Censored": censored_text,
+            }
+            await send_discord_embed(embed_type, title, description, fields, color)
+            logger.debug("Censored text: `%s`", censored_text)
 
             return censored_text
 
