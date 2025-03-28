@@ -15,6 +15,7 @@ import asyncio
 import socket
 from contextlib import suppress
 
+from utils.decode_rt_plus import decode_rt_plus
 from utils.logging import configure_logging
 
 logger = configure_logging(__name__)
@@ -92,7 +93,7 @@ class SmartGenConnectionManager:
                 # If we already have a socket, just idle until it fails or we're stopped.
                 await asyncio.sleep(1)
 
-    def send_command(self, command: str, value: str):
+    def send_command(self, command: str, value: str, truncated_text: str = ""):
         """
         Send a line like `TEXT=HELLO` to the encoder and wait for `OK`
         or `NO`. Raises an exception if no socket is available or if the
@@ -100,6 +101,11 @@ class SmartGenConnectionManager:
         """
         if not self.sock:
             raise ConnectionError("SmartGen socket is not connected.")
+
+        if command == "RT+TAG":
+            # Reconstruct the parsed values for logging
+            decoded_payload = decode_rt_plus(command, truncated_text)
+            logger.info("Decoded RT+ payload: `%s`", decoded_payload)
 
         message = f"{command}={value}\r\n"
         logger.info("Sending to encoder: `%s`", message.strip())
