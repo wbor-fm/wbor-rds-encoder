@@ -11,7 +11,7 @@ build:
 	@echo "Building images..."
 	COMPOSE_BAKE=$(COMPOSE_BAKE) $(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) build
 
-up: build
+up: down build
 	@echo "Starting containers..."
 	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) up -d
 
