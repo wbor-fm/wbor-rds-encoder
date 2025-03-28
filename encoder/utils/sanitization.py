@@ -49,10 +49,13 @@ async def sanitize_text(raw_text: str) -> str:
         unidecoded_text = unidecode(raw_text, errors="replace").strip()
 
         title = ""
+        description = ""
         if len(non_ascii_chars) > 1:
-            title = "Non-ASCII Character(s) Replaced"
+            title = "Non-ASCII Characters Replaced"
+            description = f"Characters: `{''.join(set(non_ascii_chars))}`"
         else:
             title = "Non-ASCII Character Replaced"
+            description = f"Character: `{''.join(set(non_ascii_chars))}`"
         fields = {
             "Original": raw_text,
             "Unidecoded": unidecoded_text,
@@ -62,7 +65,7 @@ async def sanitize_text(raw_text: str) -> str:
             embed_type=EmbedType.UNIDECODE,
             title=title,
             title_url="https://github.com/WBOR-91-1-FM/wbor-rds-encoder/blob/c860debbe5994af0fe391fdbbc8539a7741549a3/encoder/utils/sanitization.py#L24",  # pylint: disable=line-too-long
-            desc=f"Non-ASCII Characters: `{''.join(set(non_ascii_chars))}`",
+            desc=description,
             fields=fields,
             color=Colors.WARNING,
         )
