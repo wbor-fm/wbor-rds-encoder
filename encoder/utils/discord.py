@@ -72,7 +72,6 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
         embed.add_embed_field(name=field_name, value=field_value)
 
     embed.set_author(name=author, icon_url=author_icon_url)
-    embed.set_timestamp()
     webhook.add_embed(embed)
     response = await webhook.execute()
     logger.debug(
