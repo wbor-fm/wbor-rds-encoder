@@ -43,7 +43,7 @@ async def sanitize_text(raw_text: str, field_type: str = None) -> str:
             # normalizes the text.
             cleaned_text = clean_metadata_field(field_type, raw_text)
             if cleaned_text != raw_text:
-                logger.debug(
+                logger.info(
                     "Metadata cleaned (%s): `%s` -> `%s`",
                     field_type,
                     raw_text,
@@ -82,7 +82,7 @@ async def sanitize_text(raw_text: str, field_type: str = None) -> str:
     if non_ascii_chars:
         unidecoded_text = unidecode(raw_text, errors="replace").strip()
 
-        logger.debug(
+        logger.info(
             "Non-ASCII characters unidecoded: `%s` -> `%s`",
             cleaned_text,
             unidecoded_text,
