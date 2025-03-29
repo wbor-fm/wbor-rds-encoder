@@ -64,7 +64,6 @@ async def on_message(
             logger.debug("TEXT value: `%s`", text)
             truncated = len(text) > 64
             truncated_text = text[:64] if truncated else text
-
             if truncated:
                 logger.warning("TEXT value exceeds 64 characters: `%s`", text)
                 logger.debug("Truncated TEXT value: `%s`", truncated_text)
