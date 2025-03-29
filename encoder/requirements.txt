@@ -4,3 +4,4 @@ colorlog
 pytz
 unidecode
 discord-webhook[async]
+music-metadata-filter

@@ -26,6 +26,7 @@ class EmbedType:
 
     UNIDECODE = "Unidecoded to ASCII"
     PROFANITY = "Profanity Filtered"
+    METADATA = "Metadata Cleaned"
 
 
 class Colors:

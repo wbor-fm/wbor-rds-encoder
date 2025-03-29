@@ -51,8 +51,8 @@ async def on_message(
             logger.debug("Extracted track info: `%s` - `%s`", artist, title)
 
             # (1) Sanitize (unidecode, filter profanity, truncate, uppercase)
-            sanitized_artist = await sanitize_text(artist)
-            sanitized_title = await sanitize_text(title)
+            sanitized_artist = await sanitize_text(artist, field_type="artist")
+            sanitized_title = await sanitize_text(title, field_type="track")
             logger.debug(
                 "Returned sanitized track info: `%s` - `%s`",
                 sanitized_artist,
