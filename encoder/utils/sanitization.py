@@ -38,6 +38,9 @@ async def sanitize_text(raw_text: str, field_type: str = None) -> str:
     cleaned_text = raw_text
     if field_type:
         try:
+            # Clean the metadata field using music-metadata-filter
+            # (Amazon filter). This removes unwanted characters and
+            # normalizes the text.
             cleaned_text = clean_metadata_field(field_type, raw_text)
             if cleaned_text != raw_text:
                 logger.debug(
@@ -50,7 +53,7 @@ async def sanitize_text(raw_text: str, field_type: str = None) -> str:
                 title = "Metadata Cleaned"
                 description = (
                     f"{field_type.capitalize()} field cleaned using "
-                    f"music-metadata-filter (Spotify filter)."
+                    f"music-metadata-filter (Amazon filter)."
                 )
                 fields = {
                     "Original": raw_text,
