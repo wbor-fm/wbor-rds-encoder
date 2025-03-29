@@ -4,6 +4,7 @@ COMPOSE_FILE = docker-compose.yml
 SERVICE_NAME = wbor-rds-encoder
 PROJECT_NAME = wbor-rds-encoder
 COMPOSE_BAKE = true
+export PODMAN_COMPOSE_SILENT = true
 
 default: up logs
 
