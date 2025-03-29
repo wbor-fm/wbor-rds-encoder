@@ -32,8 +32,11 @@ def decode_rt_plus(rt_plus_payload: str, text: str) -> dict:
         decode_rt_plus("ARTIST_TAG,0,5,TITLE_TAG,8,10,0,0", "Queen -
             Radio Gaga") -> {'artist': 'Queen', 'title': 'Radio Gaga'}
     """
-    tags = rt_plus_payload.split(",")[:-2]
     logger.debug("Decoding RT+ payload: `%s` with text: `%s`", rt_plus_payload, text)
+    tags = rt_plus_payload.split(",")[:-2]
+    logger.debug("Parsed tags: `%s`", tags)
+    if not tags:
+        raise ValueError("Invalid RT+ payload: empty or malformed payload")
     # Validate the payload format
     if len(tags) != 6:
         raise ValueError(
