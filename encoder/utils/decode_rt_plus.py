@@ -12,6 +12,9 @@ Changelog:
 """
 
 from config import ARTIST_TAG, TITLE_TAG
+from utils.logging import configure_logging
+
+logger = configure_logging(__name__)
 
 
 def decode_rt_plus(rt_plus_payload: str, text: str) -> dict:
@@ -30,8 +33,16 @@ def decode_rt_plus(rt_plus_payload: str, text: str) -> dict:
             Radio Gaga") -> {'artist': 'Queen', 'title': 'Radio Gaga'}
     """
     tags = rt_plus_payload.split(",")[:-2]
+    logger.debug("Decoding RT+ payload: `%s` with text: `%s`", rt_plus_payload, text)
+    # Validate the payload format
     if len(tags) != 6:
-        raise ValueError("Invalid RT+ payload: incorrect number of tags")
+        raise ValueError(
+            f"Invalid RT+ payload: incorrect number of tags: `{len(tags)}`"
+        )
+    if tags[0] not in (ARTIST_TAG, TITLE_TAG) or tags[3] not in (ARTIST_TAG, TITLE_TAG):
+        raise ValueError(f"Invalid RT+ payload: incorrect tags: `{tags}`")
+    if not all(tag.isalnum() for tag in tags):
+        raise ValueError(f"Invalid RT+ payload: non-alphanumeric tags: `{tags}`")
 
     try:
         payloads = {
