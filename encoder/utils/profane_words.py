@@ -56,9 +56,12 @@ async def filter_profane_words(text: str) -> str:
 
         if censored:
             censored_text = re.sub(pattern, lambda m: "*" * len(m.group(0)), text)
+            markdown_safe_censored_text = re.sub(
+                pattern, lambda m: r"\*" * len(m.group(0)), text
+            )
             fields = {
                 "Original": text,
-                "Censored": censored_text,
+                "Censored": markdown_safe_censored_text,
             }
             await send_discord_embed(
                 embed_type=EmbedType.PROFANITY,
