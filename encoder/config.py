@@ -63,3 +63,4 @@ RDS_ENCODER_PORT = int(RDS_ENCODER_PORT)
 # Content type codes
 ARTIST_TAG = "04"
 TITLE_TAG = "01"
+BLANK_TAG = "00"

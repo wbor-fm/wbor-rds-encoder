@@ -11,7 +11,7 @@ Changelog:
     - 1.0.0 (2025-03-23): Initial release.
 """
 
-from config import ARTIST_TAG, TITLE_TAG
+from config import ARTIST_TAG, BLANK_TAG, TITLE_TAG
 from utils.logging import configure_logging
 
 logger = configure_logging(__name__)
@@ -42,7 +42,13 @@ def decode_rt_plus(rt_plus_payload: str, text: str) -> dict:
         raise ValueError(
             f"Invalid RT+ payload: incorrect number of tags: `{len(tags)}`"
         )
-    if tags[0] not in (ARTIST_TAG, TITLE_TAG) or tags[3] not in (ARTIST_TAG, TITLE_TAG):
+    # The first tag should always be ARTIST_TAG or TITLE_TAG, and the
+    # third tag may be BLANK_TAG if only sending one of the two.
+    if tags[0] not in (ARTIST_TAG, TITLE_TAG) or tags[3] not in (
+        ARTIST_TAG,
+        TITLE_TAG,
+        BLANK_TAG,
+    ):
         raise ValueError(f"Invalid RT+ payload: incorrect tags: `{tags}`")
     if not all(tag.isalnum() for tag in tags):
         raise ValueError(f"Invalid RT+ payload: non-alphanumeric tags: `{tags}`")
