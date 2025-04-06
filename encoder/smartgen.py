@@ -105,7 +105,7 @@ class SmartGenConnectionManager:
         if command == "RT+TAG":
             # Reconstruct the parsed values for logging
             decoded_payload = decode_rt_plus(value, truncated_text)
-            logger.info("Decoded RT+ payload: `%s`", decoded_payload)
+            logger.debug("Decoded RT+ payload: `%s`", decoded_payload)
 
         message = f"{command}={value}\r\n"
         logger.info("Sending to encoder: `%s`", message.strip())
