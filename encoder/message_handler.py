@@ -35,7 +35,7 @@ async def on_message(
     async with message.process():
         try:
             raw_payload = message.body.decode("utf-8")
-            logger.debug("Received track payload: `%s`", raw_payload)
+            logger.debug("Received payload: `%s`", raw_payload)
 
             # Parse and validate JSON
             track_info = json.loads(raw_payload)
@@ -65,8 +65,9 @@ async def on_message(
             truncated = len(text) > 64
             truncated_text = text[:64] if truncated else text
             if truncated:
-                logger.warning("TEXT value exceeds 64 characters: `%s`", text)
-                logger.debug("Truncated TEXT value: `%s`", truncated_text)
+                logger.warning(
+                    "TEXT value truncated to 64 characters: `%s`", truncated_text
+                )
 
             # (3) Determine RT+ tagging
             artist_in_truncated = sanitized_artist in truncated_text

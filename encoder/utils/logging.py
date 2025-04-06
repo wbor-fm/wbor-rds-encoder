@@ -42,7 +42,7 @@ def configure_logging(logger_name: str = "wbor_rds_encoder") -> logging.Logger:
 
     # Define the formatter with color and PID
     formatter = EasternTimeFormatter(
-        "%(log_color)s%(asctime)s - PID %(process)d - %(name)s - %(levelname)s - %(message)s",
+        "%(log_color)s%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         log_colors={
             "DEBUG": "white",
             "INFO": "green",

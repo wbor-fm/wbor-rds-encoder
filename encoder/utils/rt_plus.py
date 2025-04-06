@@ -32,15 +32,14 @@ def build_rt_plus_tag_command(
     """
     logger.debug("Building `RT+TAG` payload")
 
-    # Handle missing artist or title
     if not artist:
-        logger.warning("No artist provided")
+        logger.info("No artist provided (full text: `%s`)", full_text)
         artist = "NO ARTIST"
     if not title:
-        logger.warning("No title provided")
+        logger.info("No title provided (full text: `%s`)", full_text)
         title = "NO TITLE"
     if not timeout_mins:
-        logger.warning("No timeout provided, defaulting to 0")
+        logger.info("No timeout provided, defaulting to 0")
 
     # Set to one since we will never send a command to indicate that the
     # item is not running.
@@ -73,23 +72,26 @@ def build_rt_plus_tag_command(
 
     # Construct final payload
     if not payload_parts:
-        logger.error("No valid artist or title payload found in `full_text`")
+        logger.error(
+            "No artist/title payload matched from `full_text`"
+            " (there should always be at least one)"
+        )
         return ""
 
     if len(payload_parts) > 2:
         logger.critical(
-            "More than two valid artist or title payloads found in `full_text` "
-            "(this should never happen)"
+            "More than two valid artist or title payloads found in "
+            "`full_text` (there should never be more than two)"
         )
         return ""
 
     if len(payload_parts) == 1:
-        # If only one payload is present, append a second payload with empty
-        # values to ensure the command is valid.
+        # If only one payload is present, append a second payload with
+        # empty values to make it valid.
         payload_parts.append("00,00,00")
 
-    # The third to last value has a unique bound of 31, so we need to check
-    # if it exceeds this value and if so, set to 31.
+    # The third to last value has a unique bound of 31, so we need to
+    # check if it exceeds this value and if so, set to 31.
     if int(payload_parts[-1].split(",")[2]) > 31:
         payload_parts[-1] = ",".join(
             # Keep the first two values, set the third to 31
@@ -97,8 +99,8 @@ def build_rt_plus_tag_command(
             + ["31"]
         )
 
-    # Now that we've handled for potential final value exceeding 31, we can
-    # join the parts together with the running bit and timeout
+    # Now that we've handled for potential final value exceeding 31, we
+    # can join the parts together with the running bit and timeout
     rt_plus_payload = ",".join(payload_parts + [str(running_bit), str(timeout_mins)])
 
     logger.debug("Final `RT+TAG` payload: `%s`", rt_plus_payload)
