@@ -4,38 +4,13 @@ services:
       context: ./encoder
       dockerfile: Dockerfile
     container_name: wbor-rds-encoder
+    restart: always
     env_file:
       - ./encoder/.env
     volumes:
       - ./encoder/logs:/app/logs
     networks:
       - wbor-network
-
-  dummy_smartgen:
-    build:
-      context: ./dummy-smartgen
-      dockerfile: Dockerfile
-    container_name: dummy-smartgen
-    volumes:
-      - ./dummy-smartgen/logs:/app/logs
-    networks:
-      - wbor-network
-    profiles:
-      - development
-
-  rabbitmq:
-    image: rabbitmq:3.11-management
-    container_name: rabbitmq
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    ports:
-      - "5672:5672"   # AMQP port
-      - "15672:15672" # Management UI
-    networks:
-      - wbor-network
-    profiles:
-      - development
 
 networks:
   wbor-network:
