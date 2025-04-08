@@ -67,7 +67,6 @@ class SmartGenConnectionManager:
         while not self._stop:
             if self.sock is None:
                 try:
-                    logger.info("Attempting to connect to SmartGen RDS encoder...")
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.connect((self.host, self.port))
                     sock.settimeout(self.timeout)

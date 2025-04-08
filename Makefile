@@ -1,28 +1,30 @@
-# Default to Docker, allow override with DOCKER_TOOL=podman
-DOCKER_TOOL ?= docker
-COMPOSE_FILE = docker-compose.yml
-SERVICE_NAME = wbor-rds-encoder
-PROJECT_NAME = wbor-rds-encoder
+include .env
+
+ifeq ($(ENV),dev)
+    COMPOSE_ARGS = -f docker-compose.yml -f docker-compose.dev.yml
+else
+    COMPOSE_ARGS = -f docker-compose.yml
+endif
+
 COMPOSE_BAKE = true
-export PODMAN_COMPOSE_SILENT = true
 
 default: up logs
 
 build:
 	@echo "Building images..."
-	COMPOSE_BAKE=$(COMPOSE_BAKE) $(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) build
+	COMPOSE_BAKE=$(COMPOSE_BAKE) $(DOCKER_TOOL) compose -p $(PROJECT_NAME) $(COMPOSE_ARGS) build
 
 up: down build
 	@echo "Starting containers..."
-	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) up -d
+	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) $(COMPOSE_ARGS) up -d
 
 down:
 	@echo "Stopping and removing containers..."
-	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) down
+	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) $(COMPOSE_ARGS) down
 
 logs:
 	@echo "Tailing logs for $(SERVICE_NAME)..."
-	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) logs -f
+	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) $(COMPOSE_ARGS) logs -f
 
 restart: down up
 
