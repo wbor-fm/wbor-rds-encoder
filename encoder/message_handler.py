@@ -3,13 +3,15 @@ Handles incoming spin messages and sends commands to the RDS encoder.
 After parsing metadata from the message, prep and send commands.
 
 Author: Mason Daugherty <@mdrxy>
-Version: 1.0.1
+Version: 1.1.0
 Last Modified: 2025-04-16
 
 Changelog:
     - 1.0.0 (2025-03-23): Initial release.
     - 1.0.1 (2025-04-16): Refactor to improve readability and
         maintainability. Re-queue messages on recoverable errors.
+    - 1.1.0 (2025-04-16): Improved RT+ tagging logic using elipsis
+        for truncated fields.
 """
 
 import json
@@ -58,17 +60,65 @@ def create_text_field(artist: str, title: str) -> tuple[str, bool]:
     return truncated_text, truncated
 
 
+def find_fitting_prefix(
+    field: str, text: str, max_len: int, ellipsis: str = "..."
+) -> str:
+    """
+    Helper to find the longest prefix of a field that fits within the
+    truncated text. If the field is found, it returns the field with
+    ellipsis. If not, it returns an empty string.
+    """
+    for i in range(max_len, 0, -1):
+        candidate = field[:i]
+        if candidate in text:
+            return candidate + ellipsis
+    return ""
+
+
 def determine_rt_plus_tags(
     artist: str, title: str, truncated_text: str
 ) -> tuple[str, str]:
     """
-    Determine RT+ tags based on truncation.
-    """
-    rt_plus_artist = artist if artist in truncated_text else ""
-    rt_plus_title = title if title in truncated_text else ""
+    Determine RT+ tags based on what's included in the truncated text.
 
-    # Only tag fields that fully fit
-    # TODO: first n characters that fit instead of empty tag
+    If artist or title is fully present in the truncated text, return it
+    as-is.
+
+    If not, attempt to return the longest prefix of the field that is
+    present in the text, appending '...' if truncated. Ensures the final
+    text remains within 64 characters total.
+
+    Examples:
+
+    If everything fits:
+        artist = "Artist Name"
+        title = "Song Title"
+        truncated_text = "Artist Name - Song Title"
+        rt_plus_artist = "Artist Name"
+        rt_plus_title = "Song Title"
+
+    If truncation occurs:
+        artist = "Very Long Artist Name"
+        title = "Long Song Title"
+        truncated_text = "Very Long Artist Name - Long So..."
+        rt_plus_artist = "Very Long Artist Name"
+        rt_plus_title = "Long So..."
+    """
+    ellipsis = "..."
+
+    # 3 is subtracted to account for the space and dash between artist
+    # and title (` - `)
+    if artist in truncated_text:
+        rt_plus_artist = artist
+    else:
+        max_artist_len = max(0, 64 - len(title) - len(ellipsis) - 3)
+        rt_plus_artist = find_fitting_prefix(artist, truncated_text, max_artist_len)
+
+    if title in truncated_text:
+        rt_plus_title = title
+    else:
+        max_title_len = max(0, 64 - len(rt_plus_artist) - len(ellipsis) - 3)
+        rt_plus_title = find_fitting_prefix(title, truncated_text, max_title_len)
 
     return rt_plus_artist, rt_plus_title
 
