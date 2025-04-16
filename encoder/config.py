@@ -21,6 +21,9 @@ RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
 RABBITMQ_EXCHANGE = os.getenv("RABBITMQ_EXCHANGE")
 
+# Binding queue to this key
+QUEUE_BINDING_KEY = os.getenv("RABBITMQ_QUEUE_BINDING_KEY", "spinitron.#")
+
 # Publishing to this exchange (optional, for a "preview" feature)
 PREVIEW_EXCHANGE = os.getenv("RABBITMQ_PREVIEW_EXCHANGE")
 PREVIEW_ROUTING_KEY = os.getenv("RABBITMQ_PREVIEW_ROUTING_KEY")
@@ -33,8 +36,8 @@ required_env_vars = [
     RABBITMQ_USER,
     RABBITMQ_PASS,
     RABBITMQ_QUEUE,
-    PREVIEW_EXCHANGE,
-    PREVIEW_ROUTING_KEY,
+    RABBITMQ_EXCHANGE,
+    QUEUE_BINDING_KEY,
     RDS_ENCODER_HOST,
     RDS_ENCODER_PORT,
 ]
@@ -47,8 +50,8 @@ if not all(required_env_vars):
             "RABBITMQ_USER",
             "RABBITMQ_PASS",
             "RABBITMQ_QUEUE",
-            "PREVIEW_EXCHANGE",
-            "PREVIEW_ROUTING_KEY",
+            "RABBITMQ_EXCHANGE",
+            "QUEUE_BINDING_KEY",
             "RDS_ENCODER_HOST",
             "RDS_ENCODER_PORT",
         ]

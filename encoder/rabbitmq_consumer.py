@@ -3,17 +3,19 @@ Consumer; establishes a robust async connection to a RabbitMQ exchange
 and queue, consuming messages for processing.
 
 Author: Mason Daugherty <@mdrxy>
-Version: 1.0.0
-Last Modified: 2025-03-23
+Version: 1.0.1
+Last Modified: 2025-04-15
 
 Changelog:
     - 1.0.0 (2025-03-23): Initial release.
+    - 1.0.1 (2025-04-15): Use env var for queue binding key.
 """
 
 import aio_pika
 from aio_pika import ExchangeType
 from config import (
     PREVIEW_EXCHANGE,
+    QUEUE_BINDING_KEY,
     RABBITMQ_EXCHANGE,
     RABBITMQ_HOST,
     RABBITMQ_PASS,
@@ -40,9 +42,8 @@ async def consume_rabbitmq(smartgen_mgr: SmartGenConnectionManager):
     await channel.declare_exchange(RABBITMQ_EXCHANGE, ExchangeType.TOPIC, durable=True)
 
     # 2) Ensure the queue is declared and bound to the exchange
-    # TODO: remove magic strings
     queue = await channel.declare_queue(RABBITMQ_QUEUE, durable=True)
-    await queue.bind(RABBITMQ_EXCHANGE, routing_key="spinitron.#")
+    await queue.bind(RABBITMQ_EXCHANGE, routing_key=QUEUE_BINDING_KEY)
 
     # Declare the preview exchange
     preview_exchange = await channel.declare_exchange(
