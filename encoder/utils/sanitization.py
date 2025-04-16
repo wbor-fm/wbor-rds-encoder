@@ -3,15 +3,17 @@ Methods to sanitize text to (a) make safe for broadcast and (b) comply
 with SmartGen Mini syntax requirements.
 
 Author: Mason Daugherty <@mdrxy>
-Version: 1.0.0
-Last Modified: 2025-03-23
+Version: 1.0.1
+Last Modified: 2025-04-16
 
 Changelog:
     - 1.0.0 (2025-03-23): Initial release.
+    - 1.0.1 (2025-04-16): Allow option to bypass profanity filter.
 """
 
 import re
 
+from config import PROFANITY_FILTER_ENABLED
 from unidecode import unidecode
 from utils.discord import Colors, EmbedType
 from utils.discord import send_embed as send_discord_embed
@@ -112,7 +114,12 @@ async def sanitize_text(raw_text: str, field_type: str = None) -> str:
     # (2) At this point, the cleaned_text string *may* have been
     #   unidecoded. It should be safe within the ASCII range. Filter
     #   out profanity.
-    filtered_text = await filter_profane_words(unidecoded_text)
+    if PROFANITY_FILTER_ENABLED:
+        filtered_text = await filter_profane_words(unidecoded_text)
+        logger.debug("Text profane-filtered.")
+    else:
+        filtered_text = unidecoded_text
+        logger.info("Profanity filter disabled. Skipping profanity filtering...")
 
     # (3) Capitalize.
     sanitized = filtered_text.upper()

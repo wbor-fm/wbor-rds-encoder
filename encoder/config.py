@@ -31,6 +31,13 @@ PREVIEW_ROUTING_KEY = os.getenv("RABBITMQ_PREVIEW_ROUTING_KEY")
 RDS_ENCODER_HOST = str(os.getenv("RDS_ENCODER_HOST"))
 RDS_ENCODER_PORT = os.getenv("RDS_ENCODER_PORT")
 
+# Enable or disable the profanity filter (defaults to true)
+PROFANITY_FILTER_ENABLED = os.getenv("PROFANITY_FILTER_ENABLED", "true").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+
 required_env_vars = [
     RABBITMQ_HOST,
     RABBITMQ_USER,
