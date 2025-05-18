@@ -17,7 +17,8 @@ Changelog:
 import json
 import socket
 
-import aio_pika
+from aio_pika import Channel, Exchange, IncomingMessage
+from aio_pika.exceptions import AMQPError
 from smartgen import SmartGenConnectionManager
 from utils.logging import configure_logging
 from utils.rt_plus import build_rt_plus_tag_command
@@ -196,10 +197,10 @@ async def send_to_encoder(
 
 
 async def on_message(
-    message: aio_pika.IncomingMessage,
+    message: IncomingMessage,
     smartgen_mgr: SmartGenConnectionManager,
-    _channel: aio_pika.Channel,
-    _preview_exchange: aio_pika.Exchange,
+    _channel: Channel,
+    _preview_exchange: Exchange | None,
 ) -> None:
     """
     Handle incoming messages from RabbitMQ, extracting track metadata
@@ -210,12 +211,11 @@ async def on_message(
     JSON errors, missing payload fields) are logged but not re-queued.
 
     Parameters:
-    - message (aio_pika.IncomingMessage): The incoming RabbitMQ
-        message.
+    - message (IncomingMessage): The incoming RabbitMQ message.
     - smartgen_mgr (SmartGenConnectionManager): The SmartGen
         connection manager.
-    - _channel (aio_pika.Channel): The RabbitMQ channel.
-    - _preview_exchange (aio_pika.Exchange): The preview exchange.
+    - _channel (Channel): The RabbitMQ channel.
+    - _preview_exchange (Exchange): The preview exchange.
     """
     async with message.process():
         raw_payload = None
@@ -268,7 +268,7 @@ async def on_message(
         except (
             ConnectionError,
             socket.error,
-            aio_pika.exceptions.AMQPError,
+            AMQPError,
         ) as e:
             logger.exception("Communication error: `%s`", e)
             await message.nack(requeue=True)

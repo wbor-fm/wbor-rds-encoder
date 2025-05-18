@@ -1,4 +1,4 @@
-aio-pika==9.5.4
+aio-pika
 python-dotenv
 colorlog
 pytz
