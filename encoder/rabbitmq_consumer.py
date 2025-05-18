@@ -18,7 +18,7 @@ Changelog:
 import asyncio
 import socket
 from contextlib import suppress
-from typing import cast
+from typing import Optional, cast
 
 import aio_pika
 from aio_pika import ExchangeType, IncomingMessage, RobustChannel, RobustExchange
@@ -90,7 +90,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                 logger.info("RabbitMQ channel opened.")
 
                 # Add callbacks for channel closure for more detailed logging
-                def on_channel_closed_callback(_sender, exc):
+                def on_channel_closed_callback(_sender, exc: Optional[BaseException]):
                     if exc:
                         logger.error(
                             "RobustChannel was closed with error: %s", exc, exc_info=exc
@@ -98,9 +98,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                     else:
                         logger.info("RobustChannel was closed.")
 
-                channel.add_on_close_callback(  # type: ignore[attr-defined]
-                    on_channel_closed_callback
-                )
+                channel.add_close_callback(on_channel_closed_callback)  # type: ignore
 
                 await channel.declare_exchange(
                     RABBITMQ_EXCHANGE, ExchangeType.TOPIC, durable=True
