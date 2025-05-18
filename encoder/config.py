@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 DISCORD_AUTHOR_ICON_URL = os.getenv(
     "DISCORD_AUTHOR_ICON_URL", "https://wbor.org/assets/images/apple-touch-icon.png"
@@ -22,7 +23,7 @@ RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
 RABBITMQ_EXCHANGE = os.getenv("RABBITMQ_EXCHANGE")
 
 # Binding queue to this key
-QUEUE_BINDING_KEY = os.getenv("RABBITMQ_QUEUE_BINDING_KEY", "spinitron.#")
+QUEUE_BINDING_KEY = os.getenv("QUEUE_BINDING_KEY", "spinitron.#")
 
 # Publishing to this exchange (optional, for a "preview" feature)
 PREVIEW_EXCHANGE = os.getenv("RABBITMQ_PREVIEW_EXCHANGE")
@@ -68,7 +69,15 @@ if not all(required_env_vars):
         f"Missing required environment variables: `{', '.join(missing_vars)}`"
     )
 
-RDS_ENCODER_PORT = int(RDS_ENCODER_PORT)
+if RDS_ENCODER_PORT is not None:
+    try:
+        RDS_ENCODER_PORT = int(RDS_ENCODER_PORT)
+    except ValueError as exc:
+        raise EnvironmentError(
+            f"RDS_ENCODER_PORT ('{os.getenv('RDS_ENCODER_PORT')}') is not a valid integer."
+        ) from exc
+else:
+    raise EnvironmentError("RDS_ENCODER_PORT must be set and and an integer.")
 
 # Content type codes
 ARTIST_TAG = "04"

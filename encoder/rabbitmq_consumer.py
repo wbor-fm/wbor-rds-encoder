@@ -33,12 +33,17 @@ async def consume_rabbitmq(smartgen_mgr: SmartGenConnectionManager):
     """
     Connects to RabbitMQ and consumes messages.
     """
+    if RABBITMQ_HOST is None or RABBITMQ_USER is None or RABBITMQ_PASS is None:
+        raise ValueError("RabbitMQ connection parameters must not be None.")
+
     connection = await aio_pika.connect_robust(
-        host=RABBITMQ_HOST, login=RABBITMQ_USER, password=RABBITMQ_PASS
+        host=str(RABBITMQ_HOST), login=str(RABBITMQ_USER), password=str(RABBITMQ_PASS)
     )
 
     # 1) Create a channel and ensure the exchange is declared
     channel = await connection.channel()
+    if RABBITMQ_EXCHANGE is None:
+        raise ValueError("RABBITMQ_EXCHANGE must not be None.")
     await channel.declare_exchange(RABBITMQ_EXCHANGE, ExchangeType.TOPIC, durable=True)
 
     # 2) Ensure the queue is declared and bound to the exchange
@@ -46,6 +51,8 @@ async def consume_rabbitmq(smartgen_mgr: SmartGenConnectionManager):
     await queue.bind(RABBITMQ_EXCHANGE, routing_key=QUEUE_BINDING_KEY)
 
     # Declare the preview exchange
+    if PREVIEW_EXCHANGE is None:
+        raise ValueError("PREVIEW_EXCHANGE must not be None.")
     preview_exchange = await channel.declare_exchange(
         PREVIEW_EXCHANGE, aio_pika.ExchangeType.DIRECT, durable=True
     )

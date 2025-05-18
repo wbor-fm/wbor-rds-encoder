@@ -24,7 +24,7 @@ from utils.profane_words import filter_profane_words
 logger = configure_logging(__name__)
 
 
-async def sanitize_text(raw_text: str, field_type: str = None) -> str:
+async def sanitize_text(raw_text: str, field_type: str = "") -> str:
     """
     Sanitize metadata text for broadcast and SmartGen syntax. Strip or
     replace disallowed characters, remove or filter out profane words.
