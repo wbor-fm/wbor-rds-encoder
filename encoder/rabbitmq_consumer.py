@@ -148,11 +148,12 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                     )
 
                     # Wait for either the connection to close or a shutdown signal
-                    conn_closed_future = connection.closing  # type: ignore[attr-defined]
-                    event_wait_coroutine = shutdown_event.wait()
-                    event_wait_task = asyncio.create_task(
-                        event_wait_coroutine, name="shutdown_event_wait_task"
+                    conn_closed_future: asyncio.Future = cast(
+                        asyncio.Future, connection.closed
                     )
+                    event_wait_task: asyncio.Task[bool] = asyncio.create_task(
+                        shutdown_event.wait()
+                    )  # Explicit type for event_wait_task
 
                     logger.info("Waiting for connection close or shutdown event...")
                     _done, pending = await asyncio.wait(
@@ -264,13 +265,12 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                     e,
                 )
                 raise  # Let main.py handle this by recreating everything
-            else:  # Other RuntimeErrors
-                logger.critical(
-                    "An unexpected RuntimeError occurred in consume_rabbitmq: %s",
-                    e,
-                    exc_info=True,
-                )
-                raise  # Propagate other critical runtime errors
+            logger.critical(
+                "An unexpected RuntimeError occurred in consume_rabbitmq: %s",
+                e,
+                exc_info=True,
+            )
+            raise  # Propagate other critical runtime errors
         except Exception as e:  # pylint: disable=broad-except
             logger.critical(
                 "An unexpected critical error occurred in consume_rabbitmq: %s",
