@@ -18,7 +18,7 @@ Changelog:
 import asyncio
 import socket
 from contextlib import suppress
-from typing import Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 import aio_pika
 from aio_pika import ExchangeType, IncomingMessage
@@ -40,6 +40,11 @@ from utils.logging import configure_logging
 logger = configure_logging(__name__)
 
 
+# This is for type hinting the sender argument in the callback
+if TYPE_CHECKING:
+    pass
+
+
 async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     smartgen_mgr: SmartGenConnectionManager, shutdown_event: asyncio.Event
 ) -> Optional[AbstractRobustConnection]:
@@ -57,20 +62,57 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
     - smartgen_mgr (SmartGenConnectionManager): The SmartGen connection
         manager.
     - shutdown_event (asyncio.Event): An event to signal shutdown.
+
+    Returns:
+    - Optional[AbstractRobustConnection]: The RabbitMQ connection object
+        if successful, or None if shutdown occurs before connection.
     """
     if RABBITMQ_HOST is None or RABBITMQ_USER is None or RABBITMQ_PASS is None:
         raise ValueError("RabbitMQ connection parameters must not be None.")
 
-    if RABBITMQ_EXCHANGE is None or PREVIEW_EXCHANGE is None:
-        raise ValueError(
-            "Both exchanges (RABBITMQ_EXCHANGE, PREVIEW_EXCHANGE) must not be None."
-        )
+    if RABBITMQ_EXCHANGE is None:
+        raise ValueError("RABBITMQ_EXCHANGE must not be None.")
 
     # PREVIEW_EXCHANGE is optional, so not checked here strictly.
 
     connection: AbstractRobustConnection | None = None
     connect_retry_delay = 5  # seconds
     max_connect_retry_delay = 60  # seconds
+
+    def on_rabbitmq_reconnect(sender: Optional[AbstractRobustConnection]):
+        """
+        Logger callback for when the connection is re-established.
+
+        Parameters:
+        - sender (Optional[AbstractRobustConnection]): The connection instance that
+            reconnected, or None if not provided.
+        """
+        if sender:
+            host_info = "N/A"
+
+            # Safely get the `url` attribute using getattr since Pylance isn't finding it
+            connection_url = getattr(sender, "url", None)
+
+            if connection_url:
+                # connection_url should be a yarl.URL object
+                # Safely get the 'host' attribute from the URL object
+                host_attr = getattr(connection_url, "host", None)
+                if host_attr is not None:  # Check if host is not None
+                    host_info = str(host_attr)  # Ensure it's a string
+                else:
+                    host_info = "HOST_NOT_IN_URL"
+            else:
+                host_info = "URL_ATTRIBUTE_MISSING_OR_NONE"
+
+            logger.info(
+                "Successfully reconnected to RabbitMQ at %s. Connection: %r",
+                host_info,
+                sender,
+            )
+        else:
+            logger.warning(
+                "RabbitMQ reconnection event triggered, but sender information was None."
+            )
 
     while not shutdown_event.is_set():
         try:
@@ -80,11 +122,14 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                 login=RABBITMQ_USER,
                 password=RABBITMQ_PASS,
                 client_properties={"connection_name": "wbor-rds-encoder-consumer"},
-                # Add heartbeat to detect dead connections sooner from client side
+                # Heartbeat to detect dead connections sooner from client side
                 heartbeat=60,
             )
             logger.info("Successfully connected to RabbitMQ.")
             connect_retry_delay = 5  # Reset retry delay on success
+
+            if connection:
+                connection.reconnect_callbacks.add(on_rabbitmq_reconnect)
 
             async with connection:
                 async with connection.channel() as channel:
@@ -93,7 +138,6 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                     channel = cast(AbstractRobustChannel, channel)
                     logger.info("RabbitMQ channel opened.")
 
-                    # Add callbacks for channel closure for more detailed logging
                     def on_channel_closed_callback(
                         _sender, exc: Optional[BaseException]
                     ):
