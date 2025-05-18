@@ -31,6 +31,8 @@ async def main():
     Entry point for the application. Orchestrates the lifecycle of the
     SmartGen connection manager and the RabbitMQ consumer.
     """
+    logger.info("wbor-rds-encoder starting up...")
+
     smartgen_mgr = SmartGenConnectionManager(RDS_ENCODER_HOST, RDS_ENCODER_PORT)
     await smartgen_mgr.start()
 

@@ -149,7 +149,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
 
                     # Wait for either the connection to close or a shutdown signal
                     conn_closed_future: asyncio.Future = cast(
-                        asyncio.Future, connection.closed
+                        asyncio.Future, connection.closed()
                     )
                     event_wait_task: asyncio.Task[bool] = asyncio.create_task(
                         shutdown_event.wait()
