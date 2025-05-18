@@ -24,9 +24,13 @@ start: run
 
 run: stop
 	mkdir -p ${HOST_DIR}/logs
-	$(DOCKER_TOOL) run -d --restart unless-stopped \
+	$(DOCKER_TOOL) run -d \
+		--restart unless-stopped \
 		--network $(NETWORK_NAME) \
 		--name $(CONTAINER_NAME) \
+		--log-driver json-file \
+		--log-opt max-size=30m \
+		--log-opt max-file=30 \
 		-v ${HOST_DIR}/logs:/app/logs \
 		$(IMAGE_NAME)
 
