@@ -42,7 +42,12 @@ class Colors:  # pylint: disable=too-few-public-methods
 async def send_basic_webhook(message: str) -> bool:
     """
     Send a message to Discord using a webhook.
-    Returns True if successful, False otherwise.
+
+    Parameters:
+    - message (str): The message to send.
+
+    Returns:
+    - True if successful, False otherwise.
     """
     webhook = AsyncDiscordWebhook(url=DISCORD_WEBHOOK_URL, content=message)
     response = await webhook.execute()
@@ -64,13 +69,25 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
     title_url: str,
     desc: str,
     fields: dict,
-    color: Colors = Colors.DEFAULT,
+    color: int = Colors.DEFAULT,
     author_icon_url: str = DISCORD_AUTHOR_ICON_URL,
     author: str = "wbor-rds-encoder",
 ) -> bool:
     """
     Send a message with an embed to Discord using a webhook.
-    Returns True if successful, False otherwise.
+
+    Parameters:
+    - embed_type (EmbedType): The type of embed.
+    - title (str): The title of the embed.
+    - title_url (str): The URL for the title.
+    - desc (str): The description of the embed.
+    - fields (dict): A dictionary of fields to add to the embed.
+    - color (int): The color of the embed.
+    - author_icon_url (str): The URL for the author's icon.
+    - author (str): The name of the author.
+
+    Returns:
+    - True if successful, False otherwise.
     """
     webhook = AsyncDiscordWebhook(url=DISCORD_WEBHOOK_URL)
     embed = DiscordEmbed(title=title, color=color, description=desc, url=title_url)
