@@ -218,6 +218,7 @@ async def on_message(
     - _preview_exchange (aio_pika.Exchange): The preview exchange.
     """
     async with message.process():
+        raw_payload = None
         try:
             raw_payload = message.body.decode("utf-8")
             logger.debug("Received payload: `%s`", raw_payload)
