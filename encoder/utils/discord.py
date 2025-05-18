@@ -11,6 +11,8 @@ Changelog:
     - 1.0.1 (2025-04-15): Logging improvements and error handling.
 """
 
+from typing import Literal
+
 from config import DISCORD_AUTHOR_ICON_URL, DISCORD_WEBHOOK_URL
 from discord_webhook import AsyncDiscordWebhook, DiscordEmbed
 from utils.logging import configure_logging
@@ -64,7 +66,9 @@ async def send_basic_webhook(message: str) -> bool:
 
 
 async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-    embed_type: EmbedType,
+    embed_type: Literal[
+        "Unidecoded to ASCII", "Profanity Filtered", "Metadata Cleaned"
+    ],
     title: str,
     title_url: str,
     desc: str,
@@ -77,7 +81,9 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
     Send a message with an embed to Discord using a webhook.
 
     Parameters:
-    - embed_type (EmbedType): The type of embed.
+    - embed_type (Literal["Unidecoded to ASCII", "Profanity Filtered",
+        "Metadata Cleaned"]): The type of embed, matching the
+        EmbedType class values.
     - title (str): The title of the embed.
     - title_url (str): The URL for the title.
     - desc (str): The description of the embed.
