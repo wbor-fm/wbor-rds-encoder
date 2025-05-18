@@ -17,7 +17,8 @@ Changelog:
 import json
 import socket
 
-from aio_pika import Channel, Exchange, IncomingMessage
+from aio_pika import IncomingMessage
+from aio_pika.abc import AbstractChannel, AbstractRobustExchange
 from aio_pika.exceptions import AMQPError
 from smartgen import SmartGenConnectionManager
 from utils.logging import configure_logging
@@ -199,8 +200,8 @@ async def send_to_encoder(
 async def on_message(
     message: IncomingMessage,
     smartgen_mgr: SmartGenConnectionManager,
-    _channel: Channel,
-    _preview_exchange: Exchange | None,
+    _channel: AbstractChannel,
+    _preview_exchange: AbstractRobustExchange | None,
 ) -> None:
     """
     Handle incoming messages from RabbitMQ, extracting track metadata

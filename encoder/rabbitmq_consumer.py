@@ -21,8 +21,9 @@ from contextlib import suppress
 from typing import Optional, cast
 
 import aio_pika
-from aio_pika import ExchangeType, IncomingMessage, RobustChannel, RobustExchange
+from aio_pika import ExchangeType, IncomingMessage
 from aio_pika import exceptions as aio_pika_exceptions
+from aio_pika.abc import AbstractRobustChannel, AbstractRobustConnection
 from config import (
     PREVIEW_EXCHANGE,
     QUEUE_BINDING_KEY,
@@ -41,7 +42,7 @@ logger = configure_logging(__name__)
 
 async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     smartgen_mgr: SmartGenConnectionManager, shutdown_event: asyncio.Event
-):
+) -> Optional[AbstractRobustConnection]:
     """
     Connects to RabbitMQ and consumes messages. The connection will
     attempt to reconnect robustly.
@@ -67,7 +68,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
 
     # PREVIEW_EXCHANGE is optional, so not checked here strictly.
 
-    connection = None
+    connection: AbstractRobustConnection | None = None
     connect_retry_delay = 5  # seconds
     max_connect_retry_delay = 60  # seconds
 
@@ -83,134 +84,143 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                 heartbeat=60,
             )
             logger.info("Successfully connected to RabbitMQ.")
-            connect_retry_delay = 5  # Reset retry delay on successful connection
+            connect_retry_delay = 5  # Reset retry delay on success
 
             async with connection:
-                channel = cast(RobustChannel, await connection.channel())
-                logger.info("RabbitMQ channel opened.")
+                async with connection.channel() as channel:
+                    # `channel` is now an instance of RobustChannel
 
-                # Add callbacks for channel closure for more detailed logging
-                def on_channel_closed_callback(_sender, exc: Optional[BaseException]):
-                    if exc:
-                        logger.error(
-                            "RobustChannel was closed with error: %s", exc, exc_info=exc
-                        )
-                    else:
-                        logger.info("RobustChannel was closed.")
+                    channel = cast(AbstractRobustChannel, channel)
+                    logger.info("RabbitMQ channel opened.")
 
-                channel.add_close_callback(on_channel_closed_callback)  # type: ignore
-
-                await channel.declare_exchange(
-                    RABBITMQ_EXCHANGE, ExchangeType.TOPIC, durable=True
-                )
-                logger.info("Exchange `%s` declared.", RABBITMQ_EXCHANGE)
-
-                queue = await channel.declare_queue(RABBITMQ_QUEUE, durable=True)
-                logger.info("Queue `%s` declared.", RABBITMQ_QUEUE)
-                await queue.bind(RABBITMQ_EXCHANGE, routing_key=QUEUE_BINDING_KEY)
-                logger.info(
-                    "Queue `%s` bound to exchange `%s` with key `%s`.",
-                    RABBITMQ_QUEUE,
-                    RABBITMQ_EXCHANGE,
-                    QUEUE_BINDING_KEY,
-                )
-
-                preview_exchange_obj = None
-                if PREVIEW_EXCHANGE:  # Optional: only declare if configured
-                    preview_exchange_obj = await channel.declare_exchange(
-                        PREVIEW_EXCHANGE, aio_pika.ExchangeType.DIRECT, durable=True
-                    )
-                    logger.info("Preview exchange `%s` declared.", PREVIEW_EXCHANGE)
-                else:
-                    logger.info(
-                        "Preview exchange not configured, skipping declaration."
-                    )
-
-                logger.info("Waiting for messages in queue `%s`...", RABBITMQ_QUEUE)
-                consumer_tag = await queue.consume(
-                    lambda msg: on_message(
-                        cast(IncomingMessage, msg),
-                        smartgen_mgr,
-                        channel,
-                        cast(RobustExchange | None, preview_exchange_obj),
-                    )
-                )
-                logger.info(
-                    "Consumer started with tag `%s`. Listening for messages.",
-                    consumer_tag,
-                )
-
-                # Wait for either the connection to close or a shutdown signal
-
-                # Step 1: Ensure Pylance correctly understands connection.closed is a Future.
-                conn_closed_future = cast(asyncio.Future, connection.closed)
-
-                # Step 2: Explicitly create an asyncio.Task for the shutdown_event.wait() coroutine.
-                # shutdown_event.wait() returns a coroutine. Wrapping it in a task is clearer for
-                # type checking.
-                event_wait_coroutine = shutdown_event.wait()
-                event_wait_task = asyncio.create_task(
-                    event_wait_coroutine, name="shutdown_event_wait_task"
-                )
-
-                logger.info("Waiting for connection close or shutdown event...")
-                _done, pending = await asyncio.wait(
-                    [
-                        conn_closed_future,
-                        event_wait_task,
-                    ],  # Pass the Future and the explicit Task
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-
-                # Cancel pending tasks to avoid issues on exit
-                for task in pending:
-                    task.cancel()
-                    with suppress(asyncio.CancelledError):
-                        await task
-
-                if shutdown_event.is_set():
-                    logger.info("Shutdown event received, stopping consumer.")
-                    if (
-                        channel and not channel.is_closed
-                    ):  # Added channel existence check
-                        try:
-                            await queue.cancel(consumer_tag)
-                            logger.info("Consumer `%s` cancelled.", consumer_tag)
-                        except aio_pika_exceptions.ChannelInvalidStateError:
-                            logger.warning(
-                                "Channel in invalid state when trying to cancel consumer `%s`.",
-                                consumer_tag,
-                            )
-                        except aio_pika_exceptions.ChannelClosed:
-                            logger.warning(
-                                "Channel already closed when trying to cancel consumer `%s`.",
-                                consumer_tag,
-                            )
-                        except Exception as e:  # pylint: disable=broad-except
+                    # Add callbacks for channel closure for more detailed logging
+                    def on_channel_closed_callback(
+                        _sender, exc: Optional[BaseException]
+                    ):
+                        if exc:
                             logger.error(
-                                "Error cancelling consumer `%s`: `%s`", consumer_tag, e
+                                "RobustChannel was closed with error: %s",
+                                exc,
+                                exc_info=exc,
                             )
-                    return connection
+                        else:
+                            logger.info("RobustChannel was closed.")
 
-                if connection.is_closed:
-                    # Assert to Pylance that connection.closed is an asyncio.Future
-                    closed_future = cast(asyncio.Future, connection.closed)
-                    closed_exc = closed_future.exception()
-                    if closed_exc:
-                        logger.error(
-                            "RabbitMQ connection lost: %s",
-                            closed_exc,
-                            exc_info=closed_exc,
+                    channel.close_callbacks.add(on_channel_closed_callback)
+
+                    await channel.declare_exchange(
+                        RABBITMQ_EXCHANGE, ExchangeType.TOPIC, durable=True
+                    )
+                    logger.info("Exchange `%s` declared.", RABBITMQ_EXCHANGE)
+
+                    queue = await channel.declare_queue(RABBITMQ_QUEUE, durable=True)
+                    logger.info("Queue `%s` declared.", RABBITMQ_QUEUE)
+                    await queue.bind(RABBITMQ_EXCHANGE, routing_key=QUEUE_BINDING_KEY)
+                    logger.info(
+                        "Queue `%s` bound to exchange `%s` with key `%s`.",
+                        RABBITMQ_QUEUE,
+                        RABBITMQ_EXCHANGE,
+                        QUEUE_BINDING_KEY,
+                    )
+
+                    preview_exchange_obj = None
+                    if PREVIEW_EXCHANGE:  # Optional: only declare if configured
+                        preview_exchange_obj = await channel.declare_exchange(
+                            PREVIEW_EXCHANGE, aio_pika.ExchangeType.DIRECT, durable=True
                         )
-                        raise closed_exc
-                    logger.warning(
-                        "RabbitMQ connection closed without a specific exception (likely "
-                        "broker shutdown)."
+                        logger.info("Preview exchange `%s` declared.", PREVIEW_EXCHANGE)
+                    else:
+                        logger.info(
+                            "Preview exchange not configured, skipping declaration."
+                        )
+
+                    logger.info("Waiting for messages in queue `%s`...", RABBITMQ_QUEUE)
+                    consumer_tag = await queue.consume(
+                        lambda msg: on_message(
+                            cast(IncomingMessage, msg),
+                            smartgen_mgr,
+                            channel,
+                            preview_exchange_obj,
+                        )
                     )
-                    raise aio_pika_exceptions.AMQPConnectionError(
-                        "Connection closed by broker (shutdown) and connect_robust could not "
-                        "maintain it."
+                    logger.info(
+                        "Consumer started with tag `%s`. Listening for messages.",
+                        consumer_tag,
                     )
+
+                    # Wait for either the connection to close or a shutdown signal
+
+                    # Step 1: Ensure Pylance correctly understands connection.closed is a Future.
+                    conn_closed_future = cast(asyncio.Future, connection.closed)
+
+                    # Step 2: Explicitly create an asyncio.Task for the shutdown_event.wait()
+                    # coroutine. shutdown_event.wait() returns a coroutine. Wrapping it in a task is
+                    # clearer for type checking.
+                    event_wait_coroutine = shutdown_event.wait()
+                    event_wait_task = asyncio.create_task(
+                        event_wait_coroutine, name="shutdown_event_wait_task"
+                    )
+
+                    logger.info("Waiting for connection close or shutdown event...")
+                    _done, pending = await asyncio.wait(
+                        [
+                            conn_closed_future,
+                            event_wait_task,
+                        ],  # Pass the Future and the explicit Task
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+
+                    # Cancel pending tasks to avoid issues on exit
+                    for task in pending:
+                        task.cancel()
+                        with suppress(asyncio.CancelledError):
+                            await task
+
+                    if shutdown_event.is_set():
+                        logger.info("Shutdown event received, stopping consumer.")
+                        if (
+                            channel and not channel.is_closed
+                        ):  # Added channel existence check
+                            try:
+                                await queue.cancel(consumer_tag)
+                                logger.info("Consumer `%s` cancelled.", consumer_tag)
+                            except aio_pika_exceptions.ChannelInvalidStateError:
+                                logger.warning(
+                                    "Channel in invalid state when trying to cancel consumer `%s`.",
+                                    consumer_tag,
+                                )
+                            except aio_pika_exceptions.ChannelClosed:
+                                logger.warning(
+                                    "Channel already closed when trying to cancel consumer `%s`.",
+                                    consumer_tag,
+                                )
+                            except Exception as e:  # pylint: disable=broad-except
+                                logger.error(
+                                    "Error cancelling consumer `%s`: `%s`",
+                                    consumer_tag,
+                                    e,
+                                )
+                        return connection
+
+                    if connection.is_closed:
+                        # Assert to Pylance that connection.closed is an asyncio.Future
+                        closed_future = cast(asyncio.Future, connection.closed)
+                        closed_exc = closed_future.exception()
+                        if closed_exc:
+                            logger.error(
+                                "RabbitMQ connection lost: %s",
+                                closed_exc,
+                                exc_info=closed_exc,
+                            )
+                            raise closed_exc
+                        logger.warning(
+                            "RabbitMQ connection closed without a specific exception (likely "
+                            "broker shutdown)."
+                        )
+                        raise aio_pika_exceptions.AMQPConnectionError(
+                            "Connection closed by broker (shutdown) and connect_robust could not "
+                            "maintain it."
+                        )
 
         except (
             aio_pika_exceptions.AMQPConnectionError,
