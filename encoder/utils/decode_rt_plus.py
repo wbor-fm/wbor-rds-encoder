@@ -31,6 +31,13 @@ def decode_rt_plus(rt_plus_payload: str, text: str) -> dict:
     Example:
         decode_rt_plus("ARTIST_TAG,0,5,TITLE_TAG,8,10,0,0", "Queen -
             Radio Gaga") -> {'artist': 'Queen', 'title': 'Radio Gaga'}
+
+    Parameters:
+    - rt_plus_payload (str): The RT+ payload string.
+    - text (str): The text string to decode the payload against.
+
+    Returns:
+    - dict: A dictionary containing the decoded metadata.
     """
     logger.debug("Decoding RT+ payload: `%s` with text: `%s`", rt_plus_payload, text)
     tags = rt_plus_payload.split(",")[:-2]

@@ -16,7 +16,7 @@ from utils.logging import configure_logging
 logger = configure_logging(__name__)
 
 
-def build_rt_plus_tag_command(
+def build_rt_plus_tag_command(  # pylint: disable=too-many-branches
     full_text: str, artist: str, title: str, timeout_mins: int = 0
 ) -> str:
     """
@@ -29,6 +29,17 @@ def build_rt_plus_tag_command(
     indefinitely. After the timeout (in minutes) has elapsed, the text
     RT+ packet will cease transmission, even though the RT `TEXT` string
     remains.
+
+    Parameters:
+    - full_text (str): The full text string to search for artist and
+        title.
+    - artist (str): The artist name to search for in the full text.
+    - title (str): The title name to search for in the full text.
+    - timeout_mins (int): The timeout duration in minutes. Default is
+        0 (no timeout).
+
+    Returns:
+    - str: The RT+TAG payload string.
     """
     logger.debug("Building `RT+TAG` payload")
 

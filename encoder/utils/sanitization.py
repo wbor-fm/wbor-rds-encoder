@@ -33,6 +33,14 @@ async def sanitize_text(raw_text: str, field_type: str = "") -> str:
     `images/ascii-safe.png`).
 
     Note: all returned text is capitalized.
+
+    Parameters:
+    - raw_text (str): The input text to sanitize.
+    - field_type (str): The type of metadata field (e.g., "artist",
+        "title"). Used for cleaning metadata.
+
+    Returns:
+    - str: The sanitized text.
     """
     logger.debug("Sanitizing text: `%s`", raw_text)
 

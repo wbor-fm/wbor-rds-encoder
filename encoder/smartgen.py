@@ -92,11 +92,17 @@ class SmartGenConnectionManager:
                 # If we already have a socket, just idle until it fails or we're stopped.
                 await asyncio.sleep(1)
 
-    def send_command(self, command: str, value: str, truncated_text: str = ""):
+    def send_command(self, command: str, value: str, truncated_text: str = "") -> None:
         """
         Send a line like `TEXT=HELLO` to the encoder and wait for `OK`
         or `NO`. Raises an exception if no socket is available or if the
         send fails.
+
+        Parameters:
+        - command (str): The command to send (e.g., "TEXT", "RT+TAG").
+        - value (str): The value to send (e.g., "HELLO").
+        - truncated_text (str): The truncated text to send. Used for
+            logging purposes.
         """
         if not self.sock:
             raise ConnectionError("SmartGen socket is not connected.")

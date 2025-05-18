@@ -32,6 +32,10 @@ logger = configure_logging(__name__)
 async def consume_rabbitmq(smartgen_mgr: SmartGenConnectionManager):
     """
     Connects to RabbitMQ and consumes messages.
+
+    Parameters:
+    - smartgen_mgr (SmartGenConnectionManager): The SmartGen connection
+        manager.
     """
     if RABBITMQ_HOST is None or RABBITMQ_USER is None or RABBITMQ_PASS is None:
         raise ValueError("RabbitMQ connection parameters must not be None.")

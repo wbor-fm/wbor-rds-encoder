@@ -48,6 +48,12 @@ def load_profane_words() -> set:
 async def filter_profane_words(text: str) -> str:
     """
     Filter out profane words from the input text.
+
+    Parameters:
+    - text (str): The input text to filter.
+
+    Returns:
+    - str: The filtered text with profane words replaced by asterisks.
     """
     original_text = text
     censored_text = text.lower()

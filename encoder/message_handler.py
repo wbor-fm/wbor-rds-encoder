@@ -29,6 +29,13 @@ logger = configure_logging(__name__)
 async def parse_payload(raw_payload: str) -> tuple[str, str, int]:
     """
     Parse JSON payload and extract artist, title, duration.
+
+    Parameters:
+    - raw_payload (str): The raw JSON payload string.
+
+    Returns:
+    - tuple: A tuple containing the artist, title, and duration in
+        seconds.
     """
     track_info = json.loads(raw_payload)
     artist = track_info.get("artist")
@@ -44,6 +51,13 @@ async def parse_payload(raw_payload: str) -> tuple[str, str, int]:
 async def sanitize_metadata(artist: str, title: str) -> tuple[str, str]:
     """
     Sanitize metadata fields.
+
+    Parameters:
+    - artist (str): The artist name.
+    - title (str): The song title.
+
+    Returns:
+    - tuple: A tuple containing the sanitized artist and title.
     """
     sanitized_artist = await sanitize_text(artist, field_type="artist")
     sanitized_title = await sanitize_text(title, field_type="track")
@@ -53,6 +67,14 @@ async def sanitize_metadata(artist: str, title: str) -> tuple[str, str]:
 def create_text_field(artist: str, title: str) -> tuple[str, bool]:
     """
     Create and possibly truncate the TEXT field.
+
+    Parameters:
+    - artist (str): The artist name.
+    - title (str): The song title.
+
+    Returns:
+    - tuple: A tuple containing the truncated text and a boolean
+        indicating if truncation occurred.
     """
     text = f"{artist} - {title}"
     truncated = len(text) > 64
@@ -67,6 +89,15 @@ def find_fitting_prefix(
     Helper to find the longest prefix of a field that fits within the
     truncated text. If the field is found, it returns the field with
     ellipsis. If not, it returns an empty string.
+
+    Parameters:
+    - field (str): The field to search for.
+    - text (str): The text to search within.
+    - max_len (int): The maximum length of the field.
+    - ellipsis (str): The ellipsis to append if truncated.
+
+    Returns:
+    - str: The fitting prefix of the field or an empty string.
     """
     for i in range(max_len, 0, -1):
         candidate = field[:i]
@@ -103,6 +134,14 @@ def determine_rt_plus_tags(
         truncated_text = "Very Long Artist Name - Long So..."
         rt_plus_artist = "Very Long Artist Name"
         rt_plus_title = "Long So..."
+
+    Parameters:
+    - artist (str): The artist name.
+    - title (str): The song title.
+    - truncated_text (str): The truncated text.
+
+    Returns:
+    - tuple: A tuple containing the RT+ artist and title.
     """
     ellipsis = "..."
 
@@ -129,9 +168,17 @@ async def send_to_encoder(
     rt_plus_artist: str,
     rt_plus_title: str,
     duration_seconds: int,
-):
+) -> None:
     """
     Send metadata commands to SmartGen Encoder.
+
+    Parameters:
+    - smartgen_mgr (SmartGenConnectionManager): The SmartGen connection
+        manager.
+    - truncated_text (str): The truncated text to send.
+    - rt_plus_artist (str): The RT+ artist name.
+    - rt_plus_title (str): The RT+ title name.
+    - duration_seconds (int): The duration of the track in seconds.
     """
     smartgen_mgr.send_command("TEXT", truncated_text)
 
@@ -153,7 +200,7 @@ async def on_message(
     smartgen_mgr: SmartGenConnectionManager,
     _channel: aio_pika.Channel,
     _preview_exchange: aio_pika.Exchange,
-):
+) -> None:
     """
     Handle incoming messages from RabbitMQ, extracting track metadata
     and sending commands to the SmartGen encoder.
@@ -161,6 +208,14 @@ async def on_message(
     On recoverable errors (e.g., network failures or encoder connection
     problems), the message is re-queued. Non-recoverable errors (e.g.,
     JSON errors, missing payload fields) are logged but not re-queued.
+
+    Parameters:
+    - message (aio_pika.IncomingMessage): The incoming RabbitMQ
+        message.
+    - smartgen_mgr (SmartGenConnectionManager): The SmartGen
+        connection manager.
+    - _channel (aio_pika.Channel): The RabbitMQ channel.
+    - _preview_exchange (aio_pika.Exchange): The preview exchange.
     """
     async with message.process():
         try:
