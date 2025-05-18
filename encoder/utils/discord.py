@@ -3,12 +3,13 @@ Send status messages to Discord using webhooks.
 https://github.com/lovvskillz/python-discord-webhook
 
 Author: Mason Daugherty <@mdrxy>
-Version: 1.0.1
+Version: 1.0.2
 Last Modified: 2025-04-15
 
 Changelog:
     - 1.0.0 (2025-03-23): Initial release.
     - 1.0.1 (2025-04-15): Logging improvements and error handling.
+    - 1.0.2 (2025-05-18): Fix typing for `embed_type` in `send_embed`.
 """
 
 from typing import Literal
