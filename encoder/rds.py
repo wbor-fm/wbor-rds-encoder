@@ -34,8 +34,8 @@ async def main():
     smartgen_mgr = SmartGenConnectionManager(RDS_ENCODER_HOST, RDS_ENCODER_PORT)
     await smartgen_mgr.start()
 
-    connection = await consume_rabbitmq(smartgen_mgr)
     shutdown_event = asyncio.Event()
+    connection = await consume_rabbitmq(smartgen_mgr, shutdown_event)
 
     def _signal_handler():
         logger.info("Received shutdown signal.")
@@ -50,7 +50,10 @@ async def main():
 
     logger.info("Shutting down gracefully...")
     await smartgen_mgr.stop()
-    await connection.close()
+    # Ensure connection is not None before attempting to close,
+    # as consume_rabbitmq might return None if shutdown occurs during its setup.
+    if connection:
+        await connection.close()
 
 
 if __name__ == "__main__":
