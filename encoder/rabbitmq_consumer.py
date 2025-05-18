@@ -116,7 +116,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
 
     while not shutdown_event.is_set():
         try:
-            logger.info("Attempting to connect to RabbitMQ at `%s`...", RABBITMQ_HOST)
+            logger.debug("Attempting to connect to RabbitMQ at `%s`...", RABBITMQ_HOST)
             connection = await aio_pika.connect_robust(
                 host=RABBITMQ_HOST,
                 login=RABBITMQ_USER,
@@ -125,7 +125,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                 # Heartbeat to detect dead connections sooner from client side
                 heartbeat=60,
             )
-            logger.info("Successfully connected to RabbitMQ.")
+            logger.debug("Successfully connected to RabbitMQ.")
             connect_retry_delay = 5  # Reset retry delay on success
 
             if connection:
@@ -136,7 +136,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                     # `channel` is now an instance of RobustChannel
 
                     channel = cast(AbstractRobustChannel, channel)
-                    logger.info("RabbitMQ channel opened.")
+                    logger.debug("RabbitMQ channel opened.")
 
                     def on_channel_closed_callback(
                         _sender, exc: Optional[BaseException]
@@ -155,10 +155,10 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                     await channel.declare_exchange(
                         RABBITMQ_EXCHANGE, ExchangeType.TOPIC, durable=True
                     )
-                    logger.info("Exchange `%s` declared.", RABBITMQ_EXCHANGE)
+                    logger.debug("Exchange `%s` ensured/declared.", RABBITMQ_EXCHANGE)
 
                     queue = await channel.declare_queue(RABBITMQ_QUEUE, durable=True)
-                    logger.info("Queue `%s` declared.", RABBITMQ_QUEUE)
+                    logger.debug("Queue `%s` ensured/declared.", RABBITMQ_QUEUE)
                     await queue.bind(RABBITMQ_EXCHANGE, routing_key=QUEUE_BINDING_KEY)
                     logger.info(
                         "Queue `%s` bound to exchange `%s` with key `%s`.",
@@ -172,9 +172,11 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                         preview_exchange_obj = await channel.declare_exchange(
                             PREVIEW_EXCHANGE, aio_pika.ExchangeType.DIRECT, durable=True
                         )
-                        logger.info("Preview exchange `%s` declared.", PREVIEW_EXCHANGE)
+                        logger.debug(
+                            "Preview exchange `%s` ensured/declared.", PREVIEW_EXCHANGE
+                        )
                     else:
-                        logger.info(
+                        logger.debug(
                             "Preview exchange not configured, skipping declaration."
                         )
 
@@ -187,7 +189,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                         )
                     )
                     logger.info(
-                        "Consumer started with tag `%s`. Listening for messages.",
+                        "RabbitMQ consumer started with tag `%s` & listening.",
                         consumer_tag,
                     )
 
@@ -199,7 +201,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                         shutdown_event.wait()
                     )  # Explicit type for event_wait_task
 
-                    logger.info("Waiting for connection close or shutdown event...")
+                    logger.debug("Waiting for connection close or shutdown event...")
                     _done, pending = await asyncio.wait(
                         {conn_closed_future, event_wait_task},
                         return_when=asyncio.FIRST_COMPLETED,
