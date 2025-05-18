@@ -200,7 +200,6 @@ async def send_to_encoder(
 async def on_message(
     message: IncomingMessage,
     smartgen_mgr: SmartGenConnectionManager,
-    _channel: AbstractChannel,
     _preview_exchange: AbstractRobustExchange | None,
 ) -> None:
     """
@@ -215,7 +214,6 @@ async def on_message(
     - message (IncomingMessage): The incoming RabbitMQ message.
     - smartgen_mgr (SmartGenConnectionManager): The SmartGen
         connection manager.
-    - _channel (Channel): The RabbitMQ channel.
     - _preview_exchange (Exchange): The preview exchange.
     """
     async with message.process():

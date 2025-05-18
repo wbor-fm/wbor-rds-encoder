@@ -139,7 +139,6 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                         lambda msg: on_message(
                             cast(IncomingMessage, msg),
                             smartgen_mgr,
-                            channel,
                             preview_exchange_obj,
                         )
                     )
@@ -149,13 +148,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
                     )
 
                     # Wait for either the connection to close or a shutdown signal
-
-                    # Step 1: Ensure Pylance correctly understands connection.closed is a Future.
-                    conn_closed_future = cast(asyncio.Future, connection.closed)
-
-                    # Step 2: Explicitly create an asyncio.Task for the shutdown_event.wait()
-                    # coroutine. shutdown_event.wait() returns a coroutine. Wrapping it in a task is
-                    # clearer for type checking.
+                    conn_closed_future = connection.closing  # type: ignore[attr-defined]
                     event_wait_coroutine = shutdown_event.wait()
                     event_wait_task = asyncio.create_task(
                         event_wait_coroutine, name="shutdown_event_wait_task"
@@ -163,10 +156,7 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
 
                     logger.info("Waiting for connection close or shutdown event...")
                     _done, pending = await asyncio.wait(
-                        [
-                            conn_closed_future,
-                            event_wait_task,
-                        ],  # Pass the Future and the explicit Task
+                        {conn_closed_future, event_wait_task},
                         return_when=asyncio.FIRST_COMPLETED,
                     )
 
