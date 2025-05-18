@@ -12,8 +12,10 @@ Changelog:
     - 1.0.2 (2025-05-18): Fix typing for `embed_type` in `send_embed`.
 """
 
+import asyncio
 from typing import Literal
 
+import httpx
 from config import DISCORD_AUTHOR_ICON_URL, DISCORD_WEBHOOK_URL
 from discord_webhook import AsyncDiscordWebhook, DiscordEmbed
 from utils.logging import configure_logging
@@ -53,17 +55,24 @@ async def send_basic_webhook(message: str) -> bool:
     - True if successful, False otherwise.
     """
     webhook = AsyncDiscordWebhook(url=DISCORD_WEBHOOK_URL, content=message)
-    response = await webhook.execute()
-
-    if response.status_code in (200, 204):
-        logger.debug("Successfully sent basic webhook message: `%s`", message)
-        return True
-    logger.error(
-        "Failed to send basic webhook message: `%s` | Response: `%s`",
-        message,
-        response.status_code,
-    )
-    return False
+    try:
+        response = await webhook.execute()
+        if response.status_code in (200, 204):
+            logger.debug("Successfully sent basic webhook message: `%s`", message)
+            return True
+        logger.error(
+            "Failed to send basic webhook message: `%s` | Response: `%s`",
+            message,
+            response.status_code,
+        )
+        return False
+    except asyncio.CancelledError:
+        logger.warning("Discord webhook sending was cancelled.")
+        # Optionally re-raise or handle as needed
+        raise
+    except httpx.RequestError as exc:
+        logger.error("An error occurred while requesting %r: %r", exc.request.url, exc)
+        return False
 
 
 async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -105,15 +114,22 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
     embed.set_timestamp()
     embed.set_footer(text="Powered by WBOR-91-1-FM/wbor-rds-encoder")
     webhook.add_embed(embed)
-    response = await webhook.execute()
-
-    if response.status_code in (200, 204):
-        logger.debug("Successfully sent `%s` embed to Discord", embed_type)
-        return True
-    logger.error(
-        "Failed to send `%s` embed to Discord - Status: `%s`, Response: `%s`",
-        embed_type,
-        response.status_code,
-        response.content,
-    )
-    return False
+    try:
+        response = await webhook.execute()
+        if response.status_code in (200, 204):
+            logger.debug("Successfully sent `%s` embed to Discord", embed_type)
+            return True
+        logger.error(
+            "Failed to send `%s` embed to Discord - Status: `%s`, Response: `%s`",
+            embed_type,
+            response.status_code,
+            response.content,
+        )
+        return False
+    except asyncio.CancelledError:
+        logger.warning("Discord webhook sending was cancelled.")
+        # Optionally re-raise or handle as needed
+        raise
+    except httpx.RequestError as exc:
+        logger.error("An error occurred while requesting %r: %r", exc.request.url, exc)
+        return False
