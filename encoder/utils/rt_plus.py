@@ -83,7 +83,7 @@ def build_rt_plus_tag_command(  # pylint: disable=too-many-branches
 
     # Construct final payload
     if not payload_parts:
-        logger.error(
+        logger.critical(
             "No artist/title payload matched from `full_text`"
             " (there should always be at least one)"
         )
@@ -106,8 +106,7 @@ def build_rt_plus_tag_command(  # pylint: disable=too-many-branches
     if int(payload_parts[-1].split(",")[2]) > 31:
         payload_parts[-1] = ",".join(
             # Keep the first two values, set the third to 31
-            payload_parts[-1].split(",")[:2]
-            + ["31"]
+            payload_parts[-1].split(",")[:2] + ["31"]
         )
 
     # Now that we've handled for potential final value exceeding 31, we
