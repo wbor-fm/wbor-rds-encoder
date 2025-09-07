@@ -62,7 +62,7 @@ async def sanitize_text(raw_text: str, field_type: str = "") -> str:
                 title = "Metadata Cleaned"
                 description = (
                     f"{field_type.capitalize()} field cleaned using "
-                    f"music-metadata-filter."
+                    f"`music-metadata-filter`."
                 )
                 fields = {
                     "Original": raw_text,
