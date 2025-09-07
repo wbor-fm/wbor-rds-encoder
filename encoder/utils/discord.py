@@ -1,15 +1,6 @@
-"""
-Send status messages to Discord using webhooks.
+"""Send status messages to Discord using webhooks.
+
 https://github.com/lovvskillz/python-discord-webhook
-
-Author: Mason Daugherty <@mdrxy>
-Version: 1.0.2
-Last Modified: 2025-04-15
-
-Changelog:
-    - 1.0.0 (2025-03-23): Initial release.
-    - 1.0.1 (2025-04-15): Logging improvements and error handling.
-    - 1.0.2 (2025-05-18): Fix typing for `embed_type` in `send_embed`.
 """
 
 import asyncio
@@ -48,11 +39,11 @@ async def send_basic_webhook(message: str) -> bool:
     """
     Send a message to Discord using a webhook.
 
-    Parameters:
-    - message (str): The message to send.
+    Args:
+        message: The message to send.
 
     Returns:
-    - True if successful, False otherwise.
+        True if successful, False otherwise.
     """
     webhook = AsyncDiscordWebhook(url=DISCORD_WEBHOOK_URL, content=message)
     try:
@@ -90,20 +81,18 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
     """
     Send a message with an embed to Discord using a webhook.
 
-    Parameters:
-    - embed_type (Literal["Unidecoded to ASCII", "Profanity Filtered",
-        "Metadata Cleaned"]): The type of embed, matching the
-        EmbedType class values.
-    - title (str): The title of the embed.
-    - title_url (str): The URL for the title.
-    - desc (str): The description of the embed.
-    - fields (dict): A dictionary of fields to add to the embed.
-    - color (int): The color of the embed.
-    - author_icon_url (str): The URL for the author's icon.
-    - author (str): The name of the author.
+    Args:
+        embed_type: The type of embed, matching the `EmbedType` class values.
+        title: The title of the embed.
+        title_url: The URL for the title.
+        desc: The description of the embed.
+        fields: A dictionary of fields to add to the embed.
+        color: The color of the embed.
+        author_icon_url: The URL for the author's icon.
+        author: The name of the author.
 
     Returns:
-    - True if successful, False otherwise.
+        True if successful, False otherwise.
     """
     webhook = AsyncDiscordWebhook(url=DISCORD_WEBHOOK_URL)
     embed = DiscordEmbed(title=title, color=color, description=desc, url=title_url)
