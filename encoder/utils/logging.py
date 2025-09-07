@@ -4,6 +4,7 @@ Logging module.
 
 import logging
 from datetime import datetime, timezone
+import os
 
 import pytz
 from colorlog import ColoredFormatter
@@ -24,10 +25,12 @@ def configure_logging(logger_name: str = "wbor_rds_encoder") -> logging.Logger:
         # Avoid re-adding handlers if the logger is already configured
         return logger
 
-    logger.setLevel(logging.DEBUG)
+    log_level_str = os.getenv("LOG_LEVEL", "DEBUG").upper()
+    log_level = getattr(logging, log_level_str, logging.DEBUG)
+    logger.setLevel(log_level)
 
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(log_level)
 
     class EasternTimeFormatter(ColoredFormatter):
         """Custom log formatter to display timestamps in Eastern Time with colorized output"""
