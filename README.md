@@ -24,7 +24,7 @@ Responsible for dynamically updating the RDS (Radio Data System) [RT (RadioText)
 - **[RT+ (RadioText Plus)](https://tech.ebu.ch/docs/techreview/trev_307-radiotext.pdf)**: Allows certain receivers to parse metadata fields from the RT, such as artist and song name.
 - **DEVA SmartGen Mini Integration**:
   - Maintains connection with the SmartGen Mini RDS encoder. As mentioned in the overview, this app is designed to work with the SmartGen Mini, but other DEVA encoders that use the same syntax may be compatible.
-  - Sends processed messages following [SmartGen ASCII Programming Syntax constraints](https://github.com/WBOR-91-1-FM/wbor-rds-encoder/blob/main/docs/sg_mini_user_manual.pdf) (p. 34).
+  - Sends processed messages following [SmartGen ASCII Programming Syntax constraints](https://github.com/wbor-fm/wbor-rds-encoder/blob/main/docs/sg_mini_user_manual.pdf) (p. 34).
 - **Parallel RDS Preview Publishing**:
   - Publishes processed text to a RabbitMQ exchange for consumption by a downstream preview module. For example, a web page or LED sign (e.g. BetaBrite) that reflects what is *currently being shown* by the RDS encoder.
 - **Discord Logging**: In situations where text is unidecoded or profane words are censored, the original and processed text is logged to a Discord channel (defined in the `.env`) for monitoring and debugging purposes.
@@ -134,8 +134,8 @@ TEXT=Owl City - Fireflies
 
 This how we use it at WBOR. It is not a strict requirement for this app to be used in this way, but it is how we have implemented it (forks are welcome)!
 
-1. Spinitron sends track metadata to an [API proxy](https://github.com/WBOR-91-1-FM/spinitron-proxy/)
-2. An [API watchdog script](https://github.com/WBOR-91-1-FM/wbor-api-watchdog) sees that a new track is playing and publishes the data as a message to a RabbitMQ exchange
+1. Spinitron sends track metadata to an [API proxy](https://github.com/wbor-fm/spinitron-proxy/)
+2. An [API watchdog script](https://github.com/wbor-fm/wbor-api-watchdog) sees that a new track is playing and publishes the data as a message to a RabbitMQ exchange
 3. This app consumes the message, processes and sanitizes the text.
 4. The processed RT and RT+ tags are sent to the SmartGen.
 5. The processed text is published to a RabbitMQ exchange for downstream RDS previewing for sanity checking.

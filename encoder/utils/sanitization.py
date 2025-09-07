@@ -72,7 +72,7 @@ async def sanitize_text(raw_text: str, field_type: str = "") -> str:
                 await send_discord_embed(
                     embed_type=EmbedType.METADATA,
                     title=title,
-                    title_url="https://github.com/WBOR-91-1-FM/wbor-rds-encoder/blob/c860debbe5994af0fe391fdbbc8539a7741549a3/encoder/utils/sanitization.py#L24",  # pylint: disable=line-too-long
+                    title_url="https://github.com/wbor-fm/wbor-rds-encoder/blob/c860debbe5994af0fe391fdbbc8539a7741549a3/encoder/utils/sanitization.py#L24",  # pylint: disable=line-too-long
                     desc=description,
                     fields=fields,
                     color=Colors.WARNING,
@@ -113,7 +113,7 @@ async def sanitize_text(raw_text: str, field_type: str = "") -> str:
         await send_discord_embed(
             embed_type=EmbedType.UNIDECODE,
             title=title,
-            title_url="https://github.com/WBOR-91-1-FM/wbor-rds-encoder/blob/c860debbe5994af0fe391fdbbc8539a7741549a3/encoder/utils/sanitization.py#L24",  # pylint: disable=line-too-long
+            title_url="https://github.com/wbor-fm/wbor-rds-encoder/blob/c860debbe5994af0fe391fdbbc8539a7741549a3/encoder/utils/sanitization.py#L24",  # pylint: disable=line-too-long
             desc=description,
             fields=fields,
             color=Colors.WARNING,

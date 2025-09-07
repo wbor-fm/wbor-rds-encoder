@@ -112,7 +112,7 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
 
     embed.set_author(name=author, icon_url=author_icon_url)
     embed.set_timestamp()
-    embed.set_footer(text="Powered by WBOR-91-1-FM/wbor-rds-encoder")
+    embed.set_footer(text="Powered by wbor-fm/wbor-rds-encoder")
     webhook.add_embed(embed)
     try:
         response = await webhook.execute()

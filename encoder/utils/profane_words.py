@@ -78,7 +78,7 @@ async def filter_profane_words(text: str) -> str:
             embed_type=EmbedType.PROFANITY,
             title="Profanity Filtered",
             title_url=(
-                "https://github.com/WBOR-91-1-FM/wbor-rds-encoder/blob/c860debbe5994af0"
+                "https://github.com/wbor-fm/wbor-rds-encoder/blob/c860debbe5994af0"
                 "fe391fdbbc8539a7741549a3/encoder/utils/profane_words.py#L29"
             ),
             desc="Profane word detected and filtered.",
