@@ -11,6 +11,7 @@ import signal
 import sys
 
 from config import RABBITMQ_HOST, RDS_ENCODER_HOST, RDS_ENCODER_PORT
+from message_handler import shutdown_processor
 from rabbitmq_consumer import consume_rabbitmq
 from smartgen import SmartGenConnectionManager
 from utils.logging import configure_logging
@@ -49,6 +50,7 @@ async def main():
     connection = await consume_rabbitmq(smartgen_mgr, shutdown_event)
 
     logger.info("Shutting down gracefully...")
+    await shutdown_processor()
     await smartgen_mgr.stop()
     # Ensure connection is not None before attempting to close,
     # as consume_rabbitmq might return None if shutdown occurs during its setup.
