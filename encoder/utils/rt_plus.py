@@ -19,27 +19,25 @@ logger = configure_logging(__name__)
 def build_rt_plus_tag_command(  # pylint: disable=too-many-branches
     full_text: str, artist: str, title: str, timeout_mins: int = 0
 ) -> str:
-    """
-    Build the RT+TAG payload string for the 'artist - title' text.
+    """Build the RT+TAG payload string for the `'artist - title'` text.
 
     Returns a string to pass as the `RT+TAG=` value on the SmartGen.
 
-    Note: if the timeout duration is 0, the resulting timeout will be 0
-    (no timeout), meaning the text will remain on the display
-    indefinitely. After the timeout (in minutes) has elapsed, the text
-    RT+ packet will cease transmission, even though the RT `TEXT` string
-    remains.
+    Note:
+        If the timeout duration is 0, the resulting timeout will be 0
+        (no timeout), meaning the text will remain on the display
+        indefinitely. After the timeout (in minutes) has elapsed, the
+        RT+ packet will cease transmission, even though the RT `TEXT`
+        string remains.
 
-    Parameters:
-    - full_text (str): The full text string to search for artist and
-        title.
-    - artist (str): The artist name to search for in the full text.
-    - title (str): The title name to search for in the full text.
-    - timeout_mins (int): The timeout duration in minutes. Default is
-        0 (no timeout).
+    Args:
+        full_text: The full text string to search for artist and title.
+        artist: The artist name to search for in the full text.
+        title: The title name to search for in the full text.
+        timeout_mins: The timeout duration in minutes.
 
     Returns:
-    - str: The RT+TAG payload string.
+        The RT+TAG payload string, or empty string if payload cannot be built.
     """
     logger.debug("Building `RT+TAG` payload")
 

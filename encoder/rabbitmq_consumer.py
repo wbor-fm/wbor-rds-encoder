@@ -36,24 +36,21 @@ if TYPE_CHECKING:
 async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     smartgen_mgr: SmartGenConnectionManager, shutdown_event: asyncio.Event
 ) -> Optional[AbstractRobustConnection]:
-    """Connects to RabbitMQ and consumes messages.
+    """Connect to RabbitMQ and consume messages.
 
-    The connection will attempt to reconnect robustly.
+    The connection will attempt to reconnect robustly. If a `shutdown_event` is set, it
+    will try to terminate gracefully.
 
-    If a `shutdown_event` is set, it should try to terminate gracefully.
-
-    Returns the connection object if successful, or `None` if shutdown
-    occurs before connection.
-
-    Raises exceptions if connection attempts fail persistently.
-
-    Parameters:
-    - smartgen_mgr: The SmartGen connection manager.
-    - shutdown_event: An event to signal shutdown.
+    Args:
+        smartgen_mgr: The SmartGen connection manager.
+        shutdown_event: An event to signal shutdown.
 
     Returns:
-    - The RabbitMQ connection object if successful, or `None` if shutdown occurs before
-        connection.
+        The RabbitMQ connection object if successful, or `None` if shutdown occurs
+            before connection.
+
+    Raises:
+        ValueError: If RabbitMQ connection parameters are `None`.
     """
     if RABBITMQ_HOST is None or RABBITMQ_USER is None or RABBITMQ_PASS is None:
         raise ValueError("RabbitMQ connection parameters must not be None.")
@@ -68,10 +65,10 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
     max_connect_retry_delay = 60  # seconds
 
     def on_rabbitmq_reconnect(sender: Optional[AbstractRobustConnection]):
-        """Logger callback for when the connection is re-established.
+        """Log callback for when the connection is re-established.
 
-        Parameters:
-        - sender: The connection instance that reconnected, or `None` if not provided.
+        Args:
+            sender: The connection instance that reconnected, or `None` if not provided.
         """
         if sender:
             host_info = "N/A"

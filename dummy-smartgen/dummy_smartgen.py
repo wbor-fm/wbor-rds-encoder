@@ -20,11 +20,11 @@ PORT = 5000
 
 
 def start_server():
-    """
-    Starts a TCP server that listens for incoming connections and echoes
-    back received messages.
+    """Start a TCP server that listens for connections and echoes messages.
 
     The server runs indefinitely until interrupted (SIGINT or SIGTERM).
+
+    All received messages receive an `'OK'` response.
     """
     logging.basicConfig(
         level=logging.INFO,

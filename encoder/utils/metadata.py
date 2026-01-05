@@ -3,9 +3,13 @@ Functions for cleaning up music metadata fields (artist, album, track)
 using `music-metadata-filter`.
 """
 
+from typing import Literal
+
 from music_metadata_filter import functions
 from music_metadata_filter.filter import FilterSet, MetadataFilter
 from utils.logging import configure_logging
+
+MetadataFieldType = Literal["artist", "album", "track"]
 
 logger = configure_logging(__name__)
 
@@ -31,23 +35,16 @@ FILTER_SET: FilterSet = {
 METADATA_FILTER = MetadataFilter(FILTER_SET)
 
 
-def clean_metadata_field(field_type: str, value: str) -> str:
-    """
-    Cleans up a single metadata field (artist, album, track) using
-    music-metadata-filter.
+def clean_metadata_field(field_type: MetadataFieldType, value: str) -> str:
+    """Clean a single metadata field using music-metadata-filter.
 
-    Parameters:
-    - field_type (str): The type of metadata field to clean
-        (artist, album, track).
-    - value (str): The metadata field value to clean.
+    Args:
+        field_type: The type of metadata field to clean.
+        value: The metadata field value to clean.
 
     Returns:
-    - str: The cleaned metadata field value.
+        The cleaned metadata field value.
     """
     logger.debug("Cleaning metadata field: `%s` for `%s`", field_type, value)
-    if field_type not in ("artist", "album", "track"):
-        raise ValueError(f"Unsupported field_type: {field_type}")
-
     filtered = METADATA_FILTER.filter_field(field_type, value)
-
     return filtered

@@ -15,9 +15,9 @@ logger = configure_logging(__name__)
 
 
 class SmartGenConnectionManager:
-    """
-    Maintains a persistent TCP socket to the SmartGen Mini RDS encoder,
-    with automatic reconnection logic.
+    """Maintains a persistent TCP socket to the SmartGen Mini RDS encoder.
+
+    Provides automatic reconnection logic with exponential backoff.
     """
 
     def __init__(self, host: str, port: int, timeout: float = 5.0):
@@ -81,15 +81,18 @@ class SmartGenConnectionManager:
                 await asyncio.sleep(1)
 
     def send_command(self, command: str, value: str, truncated_text: str = "") -> None:
-        """Send a line like `TEXT=HELLO` to the encoder and wait for `OK` or `NO`.
+        """Send a command to the encoder and wait for `OK` or `NO` response.
 
-        Raises an exception if no socket is available or if the send fails.
+        Sends a line like `TEXT=HELLO` to the encoder.
 
-        Parameters:
-        - command (str): The command to send (e.g., "TEXT", "RT+TAG").
-        - value (str): The value to send (e.g., "HELLO").
-        - truncated_text (str): The truncated text to send. Used for
-            logging purposes.
+        Args:
+            command: The command to send (e.g., "TEXT", "RT+TAG").
+            value: The value to send (e.g., "HELLO").
+            truncated_text: The truncated text for logging purposes.
+
+        Raises:
+            ConnectionError: If no socket is available.
+            RuntimeError: If the command is rejected or fails.
         """
         if not self.sock:
             raise ConnectionError("SmartGen socket is not connected.")

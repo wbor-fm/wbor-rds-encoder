@@ -20,12 +20,15 @@ logger = configure_logging(__name__)
 async def parse_payload(raw_payload: str) -> tuple[str, str, int]:
     """Parse JSON payload and extract artist, title, duration.
 
-    Parameters:
-    - raw_payload (str): The raw JSON payload string.
+    Args:
+        raw_payload: The raw JSON payload string.
 
     Returns:
-    - tuple: A tuple containing the artist, title, and duration in
-        seconds.
+        A tuple containing the artist, title, and duration in seconds.
+
+    Raises:
+        ValueError: If artist or title is missing from the payload.
+        json.JSONDecodeError: If the payload is not valid JSON.
     """
     track_info = json.loads(raw_payload)
     artist = track_info.get("artist")
@@ -41,12 +44,12 @@ async def parse_payload(raw_payload: str) -> tuple[str, str, int]:
 async def sanitize_metadata(artist: str, title: str) -> tuple[str, str]:
     """Sanitize metadata fields.
 
-    Parameters:
-    - artist: The artist name.
-    - title: The song title.
+    Args:
+        artist: The artist name.
+        title: The song title.
 
     Returns:
-    - A tuple containing the sanitized artist and title.
+        A tuple containing the sanitized artist and title.
     """
     sanitized_artist = await sanitize_text(artist, field_type="artist")
     sanitized_title = await sanitize_text(title, field_type="track")
@@ -56,13 +59,13 @@ async def sanitize_metadata(artist: str, title: str) -> tuple[str, str]:
 def create_text_field(artist: str, title: str) -> tuple[str, bool]:
     """Create and possibly truncate the `TEXT` field.
 
-    Parameters:
-    - artist: The artist name.
-    - title: The song title.
+    Args:
+        artist: The artist name.
+        title: The song title.
 
     Returns:
-    - A tuple containing the truncated text and a boolean
-        indicating if truncation occurred.
+        A tuple containing the truncated text and a boolean indicating
+            if truncation occurred.
     """
     text = f"{artist} - {title}"
     truncated = len(text) > 64
@@ -73,19 +76,20 @@ def create_text_field(artist: str, title: str) -> tuple[str, bool]:
 def find_fitting_prefix(
     field: str, text: str, max_len: int, ellipsis: str = "..."
 ) -> str:
-    """
-    Helper to find the longest prefix of a field that fits within the
-    truncated text. If the field is found, it returns the field with
-    ellipsis. If not, it returns an empty string.
+    """Find the longest prefix of a field that fits within truncated text.
 
-    Parameters:
-    - field (str): The field to search for.
-    - text (str): The text to search within.
-    - max_len (int): The maximum length of the field.
-    - ellipsis (str): The ellipsis to append if truncated.
+    If the field is found, returns the field with ellipsis appended.
+
+    If not found, returns an empty string.
+
+    Args:
+        field: The field to search for.
+        text: The text to search within.
+        max_len: The maximum length of the field.
+        ellipsis: The ellipsis to append if truncated.
 
     Returns:
-    - str: The fitting prefix of the field or an empty string.
+        The fitting prefix of the field or an empty string.
     """
     for i in range(max_len, 0, -1):
         candidate = field[:i]
@@ -97,39 +101,38 @@ def find_fitting_prefix(
 def determine_rt_plus_tags(
     artist: str, title: str, truncated_text: str
 ) -> tuple[str, str]:
-    """
-    Determine RT+ tags based on what's included in the truncated text.
+    """Determine RT+ tags based on what's included in the truncated text.
 
-    If artist or title is fully present in the truncated text, return it
-    as-is.
+    If artist or title is fully present in the truncated text, returns it
+    as-is. If not, attempts to return the longest prefix of the field that
+    is present in the text, appending `'...'` if truncated.
 
-    If not, attempt to return the longest prefix of the field that is
-    present in the text, appending '...' if truncated. Ensures the final
-    text remains within 64 characters total.
+    Ensures the final text remains within 64 characters total.
 
-    Examples:
+    Example:
+        If everything fits::
 
-    If everything fits:
-        artist = "Artist Name"
-        title = "Song Title"
-        truncated_text = "Artist Name - Song Title"
-        rt_plus_artist = "Artist Name"
-        rt_plus_title = "Song Title"
+            artist = "Artist Name"
+            title = "Song Title"
+            truncated_text = "Artist Name - Song Title"
+            rt_plus_artist = "Artist Name"
+            rt_plus_title = "Song Title"
 
-    If truncation occurs:
-        artist = "Very Long Artist Name"
-        title = "Long Song Title"
-        truncated_text = "Very Long Artist Name - Long So..."
-        rt_plus_artist = "Very Long Artist Name"
-        rt_plus_title = "Long So..."
+        If truncation occurs::
 
-    Parameters:
-    - artist (str): The artist name.
-    - title (str): The song title.
-    - truncated_text (str): The truncated text.
+            artist = "Very Long Artist Name"
+            title = "Long Song Title"
+            truncated_text = "Very Long Artist Name - Long So..."
+            rt_plus_artist = "Very Long Artist Name"
+            rt_plus_title = "Long So..."
+
+    Args:
+        artist: The artist name.
+        title: The song title.
+        truncated_text: The truncated text.
 
     Returns:
-    - tuple: A tuple containing the RT+ artist and title.
+        A tuple containing the RT+ artist and title.
     """
     ellipsis = "..."
 
@@ -157,16 +160,17 @@ async def send_to_encoder(
     rt_plus_title: str,
     duration_seconds: int,
 ) -> None:
-    """
-    Send metadata commands to SmartGen Encoder.
+    """Send metadata commands to SmartGen Encoder.
 
-    Parameters:
-    - smartgen_mgr (SmartGenConnectionManager): The SmartGen connection
-        manager.
-    - truncated_text (str): The truncated text to send.
-    - rt_plus_artist (str): The RT+ artist name.
-    - rt_plus_title (str): The RT+ title name.
-    - duration_seconds (int): The duration of the track in seconds.
+    Args:
+        smartgen_mgr: The SmartGen connection manager.
+        truncated_text: The truncated text to send.
+        rt_plus_artist: The RT+ artist name.
+        rt_plus_title: The RT+ title name.
+        duration_seconds: The duration of the track in seconds.
+
+    Raises:
+        RuntimeError: If the RT+TAG payload cannot be built.
     """
     smartgen_mgr.send_command("TEXT", truncated_text)
 
@@ -188,19 +192,18 @@ async def on_message(
     smartgen_mgr: SmartGenConnectionManager,
     _preview_exchange: AbstractRobustExchange | None,
 ) -> None:
-    """
-    Handle incoming messages from RabbitMQ, extracting track metadata
-    and sending commands to the SmartGen encoder.
+    """Handle incoming messages from RabbitMQ.
+
+    Extracts track metadata and sends commands to the SmartGen encoder.
 
     On recoverable errors (e.g., network failures or encoder connection
     problems), the message is re-queued. Non-recoverable errors (e.g.,
     JSON errors, missing payload fields) are logged but not re-queued.
 
-    Parameters:
-    - message (IncomingMessage): The incoming RabbitMQ message.
-    - smartgen_mgr (SmartGenConnectionManager): The SmartGen
-        connection manager.
-    - _preview_exchange (Exchange): The preview exchange.
+    Args:
+        message: The incoming RabbitMQ message.
+        smartgen_mgr: The SmartGen connection manager.
+        _preview_exchange: The preview exchange (currently unused).
     """
     async with message.process():
         raw_payload = None

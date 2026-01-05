@@ -12,41 +12,46 @@ Changelog:
 """
 
 import re
+from typing import Literal
 
 from config import PROFANITY_FILTER_ENABLED
 from unidecode import unidecode
 from utils.discord import Colors, EmbedType
 from utils.discord import send_embed as send_discord_embed
 from utils.logging import configure_logging
-from utils.metadata import clean_metadata_field
+from utils.metadata import MetadataFieldType, clean_metadata_field
 from utils.profane_words import filter_profane_words
 
 logger = configure_logging(__name__)
 
 
-async def sanitize_text(raw_text: str, field_type: str = "") -> str:
-    """
-    Sanitize metadata text for broadcast and SmartGen syntax. Strip or
-    replace disallowed characters, remove or filter out profane words.
+async def sanitize_text(
+    raw_text: str, field_type: MetadataFieldType | Literal[""] = ""
+) -> str:
+    """Sanitize metadata text for broadcast and SmartGen syntax.
 
-    Reduces the character set to the ASCII range (see
-    `images/ascii-safe.png`).
+    Strips or replaces disallowed characters, removes or filters out
+    profane words. Reduces the character set to the ASCII range
+    (see images/ascii-safe.png).
 
-    Note: all returned text is capitalized.
+    Note:
+        All returned text is capitalized.
 
-    Parameters:
-    - raw_text (str): The input text to sanitize.
-    - field_type (str): The type of metadata field (e.g., "artist",
-        "title"). Used for cleaning metadata.
+    Args:
+        raw_text: The input text to sanitize.
+        field_type: The type of metadata field (e.g., `'artist'`, `'track'`).
+            Used for cleaning metadata.
+
+            Empty string skips metadata cleaning.
 
     Returns:
-    - str: The sanitized text.
+        The sanitized text in uppercase ASCII.
     """
     logger.debug("Sanitizing text: `%s`", raw_text)
 
     # (0) Clean metadata
     cleaned_text = raw_text
-    if field_type:
+    if field_type != "":
         try:
             # Clean the metadata field using music-metadata-filter
             # This removes unwanted characters and normalizes the text.

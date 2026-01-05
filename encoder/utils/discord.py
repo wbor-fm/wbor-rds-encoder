@@ -19,8 +19,7 @@ logger = configure_logging(__name__)
 async def _execute_with_retry(
     webhook: AsyncDiscordWebhook, max_retries: int = 3
 ) -> httpx.Response:
-    """
-    Execute webhook with automatic retry on rate limiting.
+    """Execute webhook with automatic retry on rate limiting.
 
     Args:
         webhook: The Discord webhook to execute.
@@ -104,9 +103,7 @@ async def _execute_with_retry(
 
 
 class EmbedType:  # pylint: disable=too-few-public-methods
-    """
-    Categorize the type of message being sent.
-    """
+    """Constants for categorizing the type of Discord embed message."""
 
     UNIDECODE = "Unidecoded to ASCII"
     PROFANITY = "Profanity Filtered"
@@ -114,9 +111,7 @@ class EmbedType:  # pylint: disable=too-few-public-methods
 
 
 class Colors:  # pylint: disable=too-few-public-methods
-    """
-    Predefined colors for Discord embeds.
-    """
+    """Predefined colors for Discord embeds."""
 
     DEFAULT = 242424  # Default color
     SUCCESS = 3066993  # Green
@@ -125,8 +120,7 @@ class Colors:  # pylint: disable=too-few-public-methods
 
 
 async def send_basic_webhook(message: str) -> bool:
-    """
-    Send a message to Discord using a webhook.
+    """Send a message to Discord using a webhook.
 
     Args:
         message: The message to send.
@@ -168,8 +162,7 @@ async def send_embed(  # pylint: disable=too-many-arguments,too-many-positional-
     author_icon_url: str = DISCORD_AUTHOR_ICON_URL,
     author: str = "wbor-rds-encoder",
 ) -> bool:
-    """
-    Send a message with an embed to Discord using a webhook.
+    """Send a message with an embed to Discord using a webhook.
 
     Args:
         embed_type: The type of embed, matching the `EmbedType` class values.

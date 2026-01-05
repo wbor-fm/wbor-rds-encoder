@@ -11,14 +11,13 @@ from colorlog import ColoredFormatter
 
 
 def configure_logging(logger_name: str = "wbor_rds_encoder") -> logging.Logger:
-    """
-    Set up logging with colorized output and timestamps in Eastern Time.
+    """Set up logging with colorized output and timestamps in Eastern Time.
 
-    Parameters:
-    - logger_name (str): The name of the logger to configure.
+    Args:
+        logger_name: The name of the logger to configure.
 
     Returns:
-    - logging.Logger: The configured logger instance.
+        The configured logger instance.
     """
     logger = logging.getLogger(logger_name)
     if logger.hasHandlers():
@@ -33,7 +32,7 @@ def configure_logging(logger_name: str = "wbor_rds_encoder") -> logging.Logger:
     console_handler.setLevel(log_level)
 
     class EasternTimeFormatter(ColoredFormatter):
-        """Custom log formatter to display timestamps in Eastern Time with colorized output"""
+        """Custom log formatter for Eastern Time timestamps with colorized output."""
 
         def formatTime(self, record, datefmt=None) -> str:
             # Convert UTC to Eastern Time

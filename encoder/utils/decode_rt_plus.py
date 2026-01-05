@@ -18,26 +18,26 @@ logger = configure_logging(__name__)
 
 
 def decode_rt_plus(rt_plus_payload: str, text: str) -> dict:
-    """
-    Decode an RT+ payload into a metadata dictionary.
-    Expected payload format (excluding the final two values):
-        <content_type_1>,
-        <start_pos_1>,
-        <length_1>,
-        <content_type_2>,
-        <start_pos_2>,
-        <length_2>
+    """Decode an RT+ payload into a metadata dictionary.
+
+    Expected payload format (excluding the final two values)::
+
+        <content_type_1>,<start_pos_1>,<length_1>,
+        <content_type_2>,<start_pos_2>,<length_2>
 
     Example:
-        decode_rt_plus("ARTIST_TAG,0,5,TITLE_TAG,8,10,0,0", "Queen -
-            Radio Gaga") -> {'artist': 'Queen', 'title': 'Radio Gaga'}
+        >>> decode_rt_plus("04,0,5,01,8,10,0,0", "Queen - Radio Gaga")
+        {'artist': 'Queen', 'title': 'Radio Gaga'}
 
-    Parameters:
-    - rt_plus_payload (str): The RT+ payload string.
-    - text (str): The text string to decode the payload against.
+    Args:
+        rt_plus_payload: The RT+ payload string.
+        text: The text string to decode the payload against.
 
     Returns:
-    - dict: A dictionary containing the decoded metadata.
+        A dictionary containing the decoded metadata with 'artist' and 'title' keys.
+
+    Raises:
+        ValueError: If the payload is invalid or malformed.
     """
     logger.debug("Decoding RT+ payload: `%s` with text: `%s`", rt_plus_payload, text)
     tags = rt_plus_payload.split(",")[:-2]

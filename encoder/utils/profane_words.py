@@ -29,12 +29,14 @@ logger = configure_logging(__name__)
 
 @lru_cache(maxsize=1)
 def load_profane_words() -> set:
-    """
-    Lazy-load and cache profane words from file. This function is
-    called when the module is imported, and the words are cached in
-    memory for performance. The cache is cleared when the application
-    is restarted or when the function is explicitly called with
+    """Lazy-load and cache profane words from file.
+
+    Words are cached in memory for performance. The cache is cleared when
+    the application is restarted or when explicitly called with
     `load_profane_words.cache_clear()`.
+
+    Returns:
+        A set of profane words to filter, or empty set if loading fails.
     """
     try:
         with open("utils/words.json", "r", encoding="utf-8") as file:
@@ -46,14 +48,13 @@ def load_profane_words() -> set:
 
 
 async def filter_profane_words(text: str) -> str:
-    """
-    Filter out profane words from the input text.
+    """Filter out profane words from the input text.
 
-    Parameters:
-    - text (str): The input text to filter.
+    Args:
+        text: The input text to filter.
 
     Returns:
-    - str: The filtered text with profane words replaced by asterisks.
+        The filtered text with profane words replaced by asterisks.
     """
     original_text = text
     censored_text = text.lower()
