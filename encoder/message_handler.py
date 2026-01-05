@@ -116,22 +116,24 @@ class MessageProcessor:
     async def _process_loop(self):
         """Background loop that processes the latest track when SmartGen is available."""
         while not self._stop:
-            # Wait for a new track or periodic check
-            try:
-                await asyncio.wait_for(self._new_track_event.wait(), timeout=5.0)
-            except asyncio.TimeoutError:
-                pass  # Periodic check even without new track
+            # Get the latest track
+            async with self._lock:
+                track = self._latest_track
 
-            self._new_track_event.clear()
+            if track is None:
+                # No track pending - wait for a new one
+                try:
+                    await asyncio.wait_for(self._new_track_event.wait(), timeout=5.0)
+                except asyncio.TimeoutError:
+                    pass  # Periodic check
+                self._new_track_event.clear()
+                continue
 
             if self._stop:
                 break
 
-            # Get the latest track
-            async with self._lock:
-                track = self._latest_track
-                if track is None:
-                    continue
+            # Clear event since we have a track to process
+            self._new_track_event.clear()
 
             # Wait for SmartGen connection
             if not self.smartgen_mgr.is_connected:
