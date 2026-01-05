@@ -1,18 +1,6 @@
 """
 Consumer; establishes a robust async connection to a RabbitMQ exchange
 and queue, consuming messages for processing.
-
-Author: Mason Daugherty <@mdrxy>
-Version: 1.0.3
-Last Modified: 2025-05-17
-
-Changelog:
-    - 1.0.0 (2025-03-23): Initial release.
-    - 1.0.1 (2025-04-15): Use env var for queue binding key.
-    - 1.0.2 (2025-05-17): Improved robustness, connection retry logic,
-        and shutdown handling.
-    - 1.0.3 (2025-05-17): Addressed Pylance/Pylint issues, refined error
-        handling and optional PREVIEW_EXCHANGE check.
 """
 
 import asyncio
@@ -48,24 +36,24 @@ if TYPE_CHECKING:
 async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     smartgen_mgr: SmartGenConnectionManager, shutdown_event: asyncio.Event
 ) -> Optional[AbstractRobustConnection]:
-    """
-    Connects to RabbitMQ and consumes messages. The connection will
-    attempt to reconnect robustly.
+    """Connects to RabbitMQ and consumes messages.
 
-    If a shutdown_event is set, it should try to terminate gracefully.
-    Returns the connection object if successful, or None if shutdown
+    The connection will attempt to reconnect robustly.
+
+    If a `shutdown_event` is set, it should try to terminate gracefully.
+
+    Returns the connection object if successful, or `None` if shutdown
     occurs before connection.
 
     Raises exceptions if connection attempts fail persistently.
 
     Parameters:
-    - smartgen_mgr (SmartGenConnectionManager): The SmartGen connection
-        manager.
-    - shutdown_event (asyncio.Event): An event to signal shutdown.
+    - smartgen_mgr: The SmartGen connection manager.
+    - shutdown_event: An event to signal shutdown.
 
     Returns:
-    - Optional[AbstractRobustConnection]: The RabbitMQ connection object
-        if successful, or None if shutdown occurs before connection.
+    - The RabbitMQ connection object if successful, or `None` if shutdown occurs before
+        connection.
     """
     if RABBITMQ_HOST is None or RABBITMQ_USER is None or RABBITMQ_PASS is None:
         raise ValueError("RabbitMQ connection parameters must not be None.")
@@ -80,12 +68,10 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
     max_connect_retry_delay = 60  # seconds
 
     def on_rabbitmq_reconnect(sender: Optional[AbstractRobustConnection]):
-        """
-        Logger callback for when the connection is re-established.
+        """Logger callback for when the connection is re-established.
 
         Parameters:
-        - sender (Optional[AbstractRobustConnection]): The connection instance that
-            reconnected, or None if not provided.
+        - sender: The connection instance that reconnected, or `None` if not provided.
         """
         if sender:
             host_info = "N/A"

@@ -1,14 +1,7 @@
-"""
-Connection manager for the SmartGen Mini RDS encoder. Handles automatic
-reconnection (with exponential backoff), starting, stopping, and command
-sending.
+"""Connection manager for the SmartGen Mini RDS encoder.
 
-Author: Mason Daugherty <@mdrxy>
-Version: 1.0.0
-Last Modified: 2025-03-23
-
-Changelog:
-    - 1.0.0 (2025-03-23): Initial release.
+Handles automatic reconnection (with exponential backoff), starting, stopping, and
+command sending.
 """
 
 import asyncio
@@ -36,16 +29,12 @@ class SmartGenConnectionManager:
         self._reconnect_task = None
 
     async def start(self):
-        """
-        Launch a background task to ensure self.sock remains connected.
-        """
+        """Launch a background task to ensure self.sock remains connected."""
         # Use create_task to start a background reconnection manager.
         self._reconnect_task = asyncio.create_task(self._manage_connection())
 
     async def stop(self):
-        """
-        Signal the background manager to stop and close socket.
-        """
+        """Signal the background manager to stop and close socket."""
         self._stop = True
         if self._reconnect_task:
             self._reconnect_task.cancel()
@@ -58,10 +47,9 @@ class SmartGenConnectionManager:
             logger.info("Closed SmartGen socket.")
 
     async def _manage_connection(self):
-        """
-        Continuously ensure there's a valid socket connection to the
-        encoder. If the connection drops, retry with exponential
-        backoff.
+        """Continuously ensure there's a valid socket connection to the encoder.
+
+        If the connection drops, retry with exponential backoff.
         """
         backoff = 1
         while not self._stop:
@@ -93,10 +81,9 @@ class SmartGenConnectionManager:
                 await asyncio.sleep(1)
 
     def send_command(self, command: str, value: str, truncated_text: str = "") -> None:
-        """
-        Send a line like `TEXT=HELLO` to the encoder and wait for `OK`
-        or `NO`. Raises an exception if no socket is available or if the
-        send fails.
+        """Send a line like `TEXT=HELLO` to the encoder and wait for `OK` or `NO`.
+
+        Raises an exception if no socket is available or if the send fails.
 
         Parameters:
         - command (str): The command to send (e.g., "TEXT", "RT+TAG").

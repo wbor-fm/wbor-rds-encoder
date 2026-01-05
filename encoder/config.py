@@ -1,5 +1,6 @@
-"""
-App configuration file. Load environment variables from .env file.
+"""App configuration file.
+
+Load environment variables from `.env` file.
 """
 
 import os

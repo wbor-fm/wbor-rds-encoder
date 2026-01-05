@@ -1,17 +1,6 @@
-"""
-Handles incoming spin messages and sends commands to the RDS encoder.
+"""Handles incoming spin messages and sends commands to the RDS encoder.
+
 After parsing metadata from the message, prep and send commands.
-
-Author: Mason Daugherty <@mdrxy>
-Version: 1.1.0
-Last Modified: 2025-04-16
-
-Changelog:
-    - 1.0.0 (2025-03-23): Initial release.
-    - 1.0.1 (2025-04-16): Refactor to improve readability and
-        maintainability. Re-queue messages on recoverable errors.
-    - 1.1.0 (2025-04-16): Improved RT+ tagging logic using elipsis
-        for truncated fields.
 """
 
 import json
@@ -29,8 +18,7 @@ logger = configure_logging(__name__)
 
 
 async def parse_payload(raw_payload: str) -> tuple[str, str, int]:
-    """
-    Parse JSON payload and extract artist, title, duration.
+    """Parse JSON payload and extract artist, title, duration.
 
     Parameters:
     - raw_payload (str): The raw JSON payload string.
@@ -51,15 +39,14 @@ async def parse_payload(raw_payload: str) -> tuple[str, str, int]:
 
 
 async def sanitize_metadata(artist: str, title: str) -> tuple[str, str]:
-    """
-    Sanitize metadata fields.
+    """Sanitize metadata fields.
 
     Parameters:
-    - artist (str): The artist name.
-    - title (str): The song title.
+    - artist: The artist name.
+    - title: The song title.
 
     Returns:
-    - tuple: A tuple containing the sanitized artist and title.
+    - A tuple containing the sanitized artist and title.
     """
     sanitized_artist = await sanitize_text(artist, field_type="artist")
     sanitized_title = await sanitize_text(title, field_type="track")
@@ -67,15 +54,14 @@ async def sanitize_metadata(artist: str, title: str) -> tuple[str, str]:
 
 
 def create_text_field(artist: str, title: str) -> tuple[str, bool]:
-    """
-    Create and possibly truncate the TEXT field.
+    """Create and possibly truncate the `TEXT` field.
 
     Parameters:
-    - artist (str): The artist name.
-    - title (str): The song title.
+    - artist: The artist name.
+    - title: The song title.
 
     Returns:
-    - tuple: A tuple containing the truncated text and a boolean
+    - A tuple containing the truncated text and a boolean
         indicating if truncation occurred.
     """
     text = f"{artist} - {title}"

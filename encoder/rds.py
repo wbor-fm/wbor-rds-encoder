@@ -3,13 +3,6 @@ Consume song metadata from a RabbitMQ queue and send it to a SmartGen
 Mini RDS encoder to update Radio Data System (RDS) & RDS+ text. Performs
 unidecoding (to ASCII) to ensure compatibility with the encoder and
 receiver units. Includes naieve profanity filtering.
-
-Author: Mason Daugherty <@mdrxy>
-Version: 1.0.0
-Last Modified: 2025-03-23
-
-Changelog:
-    - 1.0.0 (2025-03-23): Initial release.
 """
 
 import asyncio
@@ -27,9 +20,10 @@ logger = configure_logging()
 
 
 async def main():
-    """
-    Entry point for the application. Orchestrates the lifecycle of the
-    SmartGen connection manager and the RabbitMQ consumer.
+    """Entry point for the application.
+
+    Orchestrates the lifecycle of the SmartGen connection manager and the RabbitMQ
+    consumer.
     """
     logger.info("wbor-rds-encoder starting up...")
     logger.info(
