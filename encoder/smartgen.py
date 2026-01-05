@@ -5,7 +5,6 @@ command sending.
 """
 
 import asyncio
-import socket
 from contextlib import suppress
 
 from utils.decode_rt_plus import decode_rt_plus
@@ -24,15 +23,17 @@ class SmartGenConnectionManager:
         self.host = host
         self.port = port
         self.timeout = timeout
-        self.sock = None
+        self._reader: asyncio.StreamReader | None = None
+        self._writer: asyncio.StreamWriter | None = None
         self._stop = False
         self._reconnect_task = None
         self._connected_event = asyncio.Event()
+        self._lock = asyncio.Lock()
 
     @property
     def is_connected(self) -> bool:
         """Return `True` if the socket is currently connected."""
-        return self.sock is not None
+        return self._writer is not None and not self._writer.is_closing()
 
     async def wait_for_connection(self, timeout: float = 30.0) -> bool:
         """Wait for the connection to be established.
@@ -64,10 +65,17 @@ class SmartGenConnectionManager:
             with suppress(asyncio.CancelledError):
                 await self._reconnect_task
 
-        if self.sock:
-            self.sock.close()
-            self.sock = None
-            logger.info("Closed SmartGen socket.")
+        await self._close_connection()
+        logger.info("Closed SmartGen connection.")
+
+    async def _close_connection(self):
+        """Close the current connection if open."""
+        if self._writer:
+            self._writer.close()
+            with suppress(Exception):
+                await self._writer.wait_closed()
+            self._writer = None
+            self._reader = None
 
     async def _manage_connection(self):
         """Continuously ensure there's a valid socket connection to the encoder.
@@ -76,13 +84,13 @@ class SmartGenConnectionManager:
         """
         backoff = 1
         while not self._stop:
-            if self.sock is None:
+            if not self.is_connected:
                 self._connected_event.clear()
                 try:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    sock.connect((self.host, self.port))
-                    sock.settimeout(self.timeout)
-                    self.sock = sock
+                    self._reader, self._writer = await asyncio.wait_for(
+                        asyncio.open_connection(self.host, self.port),
+                        timeout=self.timeout,
+                    )
                     self._connected_event.set()
                     logger.info(
                         "Connected to SmartGen Mini RDS encoder at `%s:%d`",
@@ -91,7 +99,7 @@ class SmartGenConnectionManager:
                     )
                     # Reset backoff on successful connect
                     backoff = 1
-                except (socket.error, socket.timeout) as e:
+                except (OSError, asyncio.TimeoutError) as e:
                     logger.error(
                         "Failed to connect to SmartGen RDS encoder at `%s:%d`: %s",
                         self.host,
@@ -102,10 +110,10 @@ class SmartGenConnectionManager:
                     await asyncio.sleep(backoff)
                     backoff = min(backoff * 2, 60)  # Exponential backoff up to 1 min
             else:
-                # If we already have a socket, just idle until it fails or we're stopped.
+                # If we already have a connection, just idle until it fails or we're stopped.
                 await asyncio.sleep(1)
 
-    def send_command(self, command: str, value: str, truncated_text: str = "") -> None:
+    async def send_command(self, command: str, value: str, truncated_text: str = "") -> None:
         """Send a command to the encoder and wait for `OK` or `NO` response.
 
         Sends a line like `TEXT=HELLO` to the encoder.
@@ -119,7 +127,7 @@ class SmartGenConnectionManager:
             ConnectionError: If no socket is available.
             RuntimeError: If the command is rejected or fails.
         """
-        if not self.sock:
+        if not self.is_connected or not self._writer or not self._reader:
             raise ConnectionError("SmartGen socket is not connected.")
 
         if command == "RT+TAG":
@@ -129,41 +137,48 @@ class SmartGenConnectionManager:
 
         message = f"{command}={value}\r\n"
         logger.info("Sending to encoder: `%s`", message.strip())
-        try:
-            self.sock.sendall(message.encode("ascii", errors="ignore"))
-            response = self.sock.recv(1024).decode("ascii", errors="ignore").strip()
-            logger.debug("Encoder response: `%s`", response.strip())
-            response_lines = response.splitlines()
-            if not response_lines:
-                logger.warning("No response from encoder.")
-            elif response_lines[0] == "NO":
-                logger.warning(
-                    "Command `%s=%s` was rejected by encoder. Response was: `%s`",
-                    command,
-                    value,
-                    response_lines[0],
+
+        async with self._lock:
+            try:
+                self._writer.write(message.encode("ascii", errors="ignore"))
+                await self._writer.drain()
+
+                response_bytes = await asyncio.wait_for(
+                    self._reader.read(1024),
+                    timeout=self.timeout,
                 )
-                raise RuntimeError(
-                    f"Command `{command}={value}` rejected: `{response.strip()}`"
-                )
-            elif response_lines[-1] != "OK":
-                logger.warning(
-                    "Command `%s=%s` returned an unexpected response: `%s`",
-                    command,
-                    value,
-                    response_lines,
-                )
-                raise RuntimeError(f"Command `{command}={value}` failed: `{response}`")
-        except socket.error as e:
-            logger.error("Socket error while sending command to encoder: `%s`", e)
-            # Attempt to close so the manager reconnects
-            self.sock.close()
-            self.sock = None
-            self._connected_event.clear()
-            raise
-        except Exception:
-            # Close so the manager attempts a reconnect
-            self.sock.close()
-            self.sock = None
-            self._connected_event.clear()
-            raise
+                response = response_bytes.decode("ascii", errors="ignore").strip()
+                logger.debug("Encoder response: `%s`", response.strip())
+
+                response_lines = response.splitlines()
+                if not response_lines:
+                    logger.warning("No response from encoder.")
+                elif response_lines[0] == "NO":
+                    logger.warning(
+                        "Command `%s=%s` was rejected by encoder. Response was: `%s`",
+                        command,
+                        value,
+                        response_lines[0],
+                    )
+                    raise RuntimeError(
+                        f"Command `{command}={value}` rejected: `{response.strip()}`"
+                    )
+                elif response_lines[-1] != "OK":
+                    logger.warning(
+                        "Command `%s=%s` returned an unexpected response: `%s`",
+                        command,
+                        value,
+                        response_lines,
+                    )
+                    raise RuntimeError(f"Command `{command}={value}` failed: `{response}`")
+            except (OSError, asyncio.TimeoutError) as e:
+                logger.error("Error while sending command to encoder: `%s`", e)
+                # Close so the manager attempts a reconnect
+                await self._close_connection()
+                self._connected_event.clear()
+                raise
+            except Exception:
+                # Close so the manager attempts a reconnect
+                await self._close_connection()
+                self._connected_event.clear()
+                raise

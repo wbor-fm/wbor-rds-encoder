@@ -3,8 +3,8 @@
 After parsing metadata from the message, prep and send commands.
 """
 
+import asyncio
 import json
-import socket
 
 from aio_pika import IncomingMessage
 from aio_pika.abc import AbstractChannel, AbstractRobustExchange
@@ -172,7 +172,7 @@ async def send_to_encoder(
     Raises:
         RuntimeError: If the RT+TAG payload cannot be built.
     """
-    smartgen_mgr.send_command("TEXT", truncated_text)
+    await smartgen_mgr.send_command("TEXT", truncated_text)
 
     rt_plus_payload = build_rt_plus_tag_command(
         truncated_text,
@@ -184,7 +184,7 @@ async def send_to_encoder(
     if not rt_plus_payload:
         raise RuntimeError("Failed to build RT+TAG payload")
 
-    smartgen_mgr.send_command("RT+TAG", rt_plus_payload, truncated_text)
+    await smartgen_mgr.send_command("RT+TAG", rt_plus_payload, truncated_text)
 
 
 async def on_message(
@@ -265,7 +265,8 @@ async def on_message(
             logger.critical("Invalid payload or processing error: `%s`", e)
         except (
             ConnectionError,
-            socket.error,
+            OSError,
+            asyncio.TimeoutError,
             AMQPError,
         ) as e:
             logger.exception("Communication error: `%s`", e)
