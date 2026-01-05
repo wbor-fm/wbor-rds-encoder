@@ -104,7 +104,7 @@ class SmartGenConnectionManager:
                         "Failed to connect to SmartGen RDS encoder at `%s:%d`: %s",
                         self.host,
                         self.port,
-                        e,
+                        e or type(e).__name__,
                     )
                     # Wait before retrying
                     await asyncio.sleep(backoff)
