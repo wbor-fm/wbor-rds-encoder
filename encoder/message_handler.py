@@ -214,7 +214,21 @@ async def on_message(
             artist, title, duration_seconds = await parse_payload(raw_payload)
             logger.debug("Extracted track info: `%s` - `%s`", artist, title)
 
-            # (1) Sanitize (unidecode, filter profanity, truncate, uppercase)
+            # (1) Wait for SmartGen connection before processing. This avoids
+            #   repeated sanitization/unidecode logs when encoder is unavailable.
+            if not smartgen_mgr.is_connected:
+                logger.info(
+                    "Waiting for SmartGen connection before processing: `%s` - `%s`",
+                    artist,
+                    title,
+                )
+                connected = await smartgen_mgr.wait_for_connection(timeout=30.0)
+                if not connected:
+                    raise ConnectionError(
+                        "SmartGen connection timeout - encoder unavailable"
+                    )
+
+            # (2) Sanitize (unidecode, filter profanity, truncate, uppercase)
             sanitized_artist, sanitized_title = await sanitize_metadata(artist, title)
             logger.debug(
                 "Returned sanitized track info: `%s` - `%s`",
@@ -222,7 +236,7 @@ async def on_message(
                 sanitized_title,
             )
 
-            # (2) Create a TEXT value
+            # (3) Create a TEXT value
             truncated_text, truncated = create_text_field(
                 sanitized_artist, sanitized_title
             )
@@ -230,25 +244,15 @@ async def on_message(
             if truncated:
                 logger.warning("TEXT value truncated to 64 chars: `%s`", truncated_text)
 
-            # (3) Determine RT+ tagging
+            # (4) Determine RT+ tagging
             rt_plus_artist, rt_plus_title = determine_rt_plus_tags(
                 sanitized_artist, sanitized_title, truncated_text
             )
 
-            # (4) Send Commands to SmartGen Encoder. At this point, we
+            # (5) Send commands to SmartGen Encoder. At this point, we
             #   know that the track info is sanitized (unidecode) safe
             #   to broadcast (profanity filtered), and truncated to fit
             #   within the SmartGen `TEXT=` character limit.
-            #   Wait for SmartGen connection before attempting to send
-            #   (circuit breaker to avoid log flooding when disconnected).
-            if not smartgen_mgr.is_connected:
-                logger.info("Waiting for SmartGen connection...")
-                connected = await smartgen_mgr.wait_for_connection(timeout=30.0)
-                if not connected:
-                    raise ConnectionError(
-                        "SmartGen connection timeout - encoder unavailable"
-                    )
-
             await send_to_encoder(
                 smartgen_mgr,
                 truncated_text,
