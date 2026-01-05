@@ -3,6 +3,7 @@ App configuration file. Load environment variables from .env file.
 """
 
 import os
+import sys
 
 from dotenv import load_dotenv
 
@@ -65,19 +66,21 @@ if not all(required_env_vars):
         ]
         if not locals()[var]
     ]
-    raise EnvironmentError(
-        f"Missing required environment variables: `{', '.join(missing_vars)}`"
-    )
+    error_msg = f"Missing required environment variables: `{', '.join(missing_vars)}`"
+    print(f"CRITICAL CONFIG ERROR: {error_msg}", file=sys.stderr)
+    raise EnvironmentError(error_msg)
 
 if RDS_ENCODER_PORT is not None:
     try:
         RDS_ENCODER_PORT = int(RDS_ENCODER_PORT)
     except ValueError as exc:
-        raise EnvironmentError(
-            f"RDS_ENCODER_PORT ('{os.getenv('RDS_ENCODER_PORT')}') is not a valid integer."
-        ) from exc
+        error_msg = f"RDS_ENCODER_PORT ('{os.getenv('RDS_ENCODER_PORT')}') is not a valid integer."
+        print(f"CRITICAL CONFIG ERROR: {error_msg}", file=sys.stderr)
+        raise EnvironmentError(error_msg) from exc
 else:
-    raise EnvironmentError("RDS_ENCODER_PORT must be set and and an integer.")
+    error_msg = "RDS_ENCODER_PORT must be set and be an integer."
+    print(f"CRITICAL CONFIG ERROR: {error_msg}", file=sys.stderr)
+    raise EnvironmentError(error_msg)
 
 # Content type codes
 ARTIST_TAG = "04"

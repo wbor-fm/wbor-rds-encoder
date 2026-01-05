@@ -116,16 +116,19 @@ async def consume_rabbitmq(  # pylint: disable=too-many-branches, too-many-local
 
     while not shutdown_event.is_set():
         try:
-            logger.debug("Attempting to connect to RabbitMQ at `%s`...", RABBITMQ_HOST)
-            connection = await aio_pika.connect_robust(
-                host=RABBITMQ_HOST,
-                login=RABBITMQ_USER,
-                password=RABBITMQ_PASS,
-                client_properties={"connection_name": "wbor-rds-encoder-consumer"},
-                # Heartbeat to detect dead connections sooner from client side
-                heartbeat=60,
+            logger.info("Attempting to connect to RabbitMQ at `%s`...", RABBITMQ_HOST)
+            connection = await asyncio.wait_for(
+                aio_pika.connect_robust(
+                    host=RABBITMQ_HOST,
+                    login=RABBITMQ_USER,
+                    password=RABBITMQ_PASS,
+                    client_properties={"connection_name": "wbor-rds-encoder-consumer"},
+                    # Heartbeat to detect dead connections sooner from client side
+                    heartbeat=60,
+                ),
+                timeout=30,  # 30 second connection timeout
             )
-            logger.debug("Successfully connected to RabbitMQ.")
+            logger.info("Successfully connected to RabbitMQ.")
             connect_retry_delay = 5  # Reset retry delay on success
 
             if connection:

@@ -17,7 +17,7 @@ import logging
 import signal
 import sys
 
-from config import RDS_ENCODER_HOST, RDS_ENCODER_PORT
+from config import RABBITMQ_HOST, RDS_ENCODER_HOST, RDS_ENCODER_PORT
 from rabbitmq_consumer import consume_rabbitmq
 from smartgen import SmartGenConnectionManager
 from utils.logging import configure_logging
@@ -32,6 +32,12 @@ async def main():
     SmartGen connection manager and the RabbitMQ consumer.
     """
     logger.info("wbor-rds-encoder starting up...")
+    logger.info(
+        "Configuration: RDS_ENCODER=%s:%s, RABBITMQ_HOST=%s",
+        RDS_ENCODER_HOST,
+        RDS_ENCODER_PORT,
+        RABBITMQ_HOST,
+    )
 
     smartgen_mgr = SmartGenConnectionManager(RDS_ENCODER_HOST, RDS_ENCODER_PORT)
     await smartgen_mgr.start()
