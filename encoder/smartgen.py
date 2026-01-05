@@ -27,6 +27,29 @@ class SmartGenConnectionManager:
         self.sock = None
         self._stop = False
         self._reconnect_task = None
+        self._connected_event = asyncio.Event()
+
+    @property
+    def is_connected(self) -> bool:
+        """Return `True` if the socket is currently connected."""
+        return self.sock is not None
+
+    async def wait_for_connection(self, timeout: float = 30.0) -> bool:
+        """Wait for the connection to be established.
+
+        Args:
+            timeout: Maximum time to wait in seconds.
+
+        Returns:
+            `True` if connected, `False` if timeout occurred.
+        """
+        if self.is_connected:
+            return True
+        try:
+            await asyncio.wait_for(self._connected_event.wait(), timeout=timeout)
+            return True
+        except asyncio.TimeoutError:
+            return False
 
     async def start(self):
         """Launch a background task to ensure self.sock remains connected."""
@@ -54,11 +77,13 @@ class SmartGenConnectionManager:
         backoff = 1
         while not self._stop:
             if self.sock is None:
+                self._connected_event.clear()
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.connect((self.host, self.port))
                     sock.settimeout(self.timeout)
                     self.sock = sock
+                    self._connected_event.set()
                     logger.info(
                         "Connected to SmartGen Mini RDS encoder at `%s:%d`",
                         self.host,
@@ -134,9 +159,11 @@ class SmartGenConnectionManager:
             # Attempt to close so the manager reconnects
             self.sock.close()
             self.sock = None
+            self._connected_event.clear()
             raise
         except Exception:
             # Close so the manager attempts a reconnect
             self.sock.close()
             self.sock = None
+            self._connected_event.clear()
             raise

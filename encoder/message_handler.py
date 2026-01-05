@@ -239,6 +239,16 @@ async def on_message(
             #   know that the track info is sanitized (unidecode) safe
             #   to broadcast (profanity filtered), and truncated to fit
             #   within the SmartGen `TEXT=` character limit.
+            #   Wait for SmartGen connection before attempting to send
+            #   (circuit breaker to avoid log flooding when disconnected).
+            if not smartgen_mgr.is_connected:
+                logger.info("Waiting for SmartGen connection...")
+                connected = await smartgen_mgr.wait_for_connection(timeout=30.0)
+                if not connected:
+                    raise ConnectionError(
+                        "SmartGen connection timeout - encoder unavailable"
+                    )
+
             await send_to_encoder(
                 smartgen_mgr,
                 truncated_text,
@@ -259,4 +269,12 @@ async def on_message(
             AMQPError,
         ) as e:
             logger.exception("Communication error: `%s`", e)
-            await message.nack(requeue=True)
+            try:
+                if not message.channel.is_closed:
+                    await message.nack(requeue=True)
+                else:
+                    logger.warning(
+                        "Channel closed, cannot nack message (will be redelivered)"
+                    )
+            except Exception as nack_err:
+                logger.warning("Failed to nack message: `%s`", nack_err)
