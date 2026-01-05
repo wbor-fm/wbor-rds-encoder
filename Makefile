@@ -33,3 +33,7 @@ watch:
 	while inotifywait -r -e modify,create,delete ./; do \
 		$(MAKE) restart; \
 	done
+
+clean: down
+	@echo "Removing images and volumes..."
+	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) $(COMPOSE_ARGS) down --rmi all --volumes
